@@ -1,0 +1,252 @@
+#!/usr/bin/env python
+
+import time
+
+import numpy as np
+from numpy import sin, sqrt
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.axes3d import Axes3D
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+from scipy.integrate import odeint
+
+def smooth_x(x):
+    E = 1.8
+    return np.power(np.abs(x),E)*np.sign(x)
+
+def smooth_dx(dx,x):
+    x1 = 0.01
+    return dx*(-2*(-x/x1)**3 + 3*(-x/x1)**2)
+
+class JointParam(object):
+    def __init__(self, J=1.5, K=2000.0):
+        self.J = J
+        self.K = K
+
+        self.Dl = 10
+
+        self.P = 0.0
+        self.D = 0.0
+
+        self.Tjump = 0.3
+        self.g = 9.8
+        self.l = 0.4/sqrt(2)
+        self.m = 70.0*0.5 # for double support phase
+
+class JointImpactAnalyzer(object):
+    def __init__(self):
+        self.param = JointParam()
+
+    def calc_reducer_torque(self, q, x, dq, dx):
+        # fin = K * smooth_x(q-x/l) +self.param.Dl * smooth_dx(dq-dx/l,q-x/l)
+        fin_l = self.param.K * (q-x/self.param.l) + self.param.Dl * (dq-dx/self.param.l)
+        return fin_l if fin_l > 0 else 0
+
+    def calc_ref_tau(self, t, x, dx, dq):
+        # Tland = 0.5
+        # Tland = 0.2
+        Tland = 0.1
+        # Tland = 0.05
+        # Tland = 0.02
+        # Tland = 0.01
+
+        # alpha = 0.0
+        # alpha = 0.3
+        # alpha = 0.1
+        # alpha = 0.8
+        # alpha = 1.0
+        # alpha = 1.1
+        alpha = 1.15
+
+        # return 0
+        # return m*l*g*alpha
+        # return min(m*l*g*alpha, m*l*g*alpha*t/Tland)
+        # return m*l*(g/Tland * t if dx < 0 else g)
+
+        return - self.param.D*dq # only D control
+
+        # 2-order function x0=0 dx0=-gTjump/2 dx1=0 ddx0=-g ddx1=0
+        # a = -3*g/Tland**2 * (1 + Tjump/Tland)
+        # return m*l*( (t-Tland)*(a*t+g/Tland) + g if t < Tland else g )
+
+    # def state_equation_func(xvec,t):
+    def state_equation_func(self, xvec, t):
+        param = self.param
+
+        eta = 1.0
+
+        ret = [0,0,0,0]
+        # xvec = [q x dq dx]
+        q = xvec[0]
+        x = xvec[1]
+        dq = xvec[2]
+        dx = xvec[3]
+
+        ret[0] = xvec[2]# dq = dq
+        ret[1] = xvec[3]# dx = dx
+
+        tau = self.calc_reducer_torque(q,x,dq,dx)
+        ref_tau = self.calc_ref_tau(t,x,dx,dq)
+        # ret[2] = -param.P/param.J * q -param.D/param.J * dq -    eta/param.J* tau +ref_tau/param.J # ddq
+        ret[2] = -param.P/param.J * q                 -    eta/param.J* tau +ref_tau/param.J # ddq including -D*dq into ref_tau
+        ret[3] = 1.0/(param.m*param.l)* tau - param.g # ddx
+
+        return ret
+
+    # def calc_ode(self):
+    def calc_ode(self):
+        duration = 0.5
+        # frame_rate = 1000
+        frame_rate = 100000
+        dt = 1.0/frame_rate
+        self.t_vec = np.linspace(0,duration,duration*frame_rate)
+        self.x_mat = odeint(self.state_equation_func, [0,0,0,-self.param.g*self.param.Tjump*0.5], self.t_vec)
+
+    def calc_variables(self):
+        self.calc_ode()
+        self.tau_vec = [self.calc_reducer_torque(xvec[0],xvec[1],xvec[2],xvec[3]) for xvec in self.x_mat]
+        self.ref_tau_vec = [self.calc_ref_tau(t,x,dx,dq) for t,(x,dq,dx) in zip(self.t_vec,self.x_mat[:,1:4])]
+
+    def plot_answer(self, title='Joint Impact'):
+        deg_scale = 1
+        tau_scale = 0.1
+        plt.figure(0, figsize=(18,15))
+        plt.cla()
+        plt.title(title)
+        plt.xlabel('t')
+        plt.ylabel('x')
+        plt.ylim(-100,200)
+        # plt.axes(axisbg='white')
+        plt.grid(True, color='gray', linestyle='dashed')
+        plt.plot(self.t_vec, np.rad2deg(self.x_mat[:,0])*deg_scale,    label='q *'+str(deg_scale)+'[deg]')
+        plt.plot(self.t_vec, np.rad2deg(self.x_mat[:,1]/l)*deg_scale,  label='x/l *'+str(deg_scale)+'[deg]')
+        # plt.plot(t, K*(x[:,0] - x[:,1]/l)*tau_scale, label='tau*'+str(tau_scale)+'[Nm]')
+        # plt.plot(t, [K*smooth_x(val)*tau_scale for val in x[:,0] - x[:,1]/l], label='tau*'+str(tau_scale)+'[Nm]')
+        # plt.plot(t, [(K*smooth_x(delq)+Dl*smooth_dx(deldq,delq))*tau_scale for delq,deldq in zip(x[:,0]-x[:,1]/l, x[:,2]-x[:,3]/l)], label='tau*'+str(tau_scale)+'[Nm]')
+        plt.plot(self.t_vec, [val*tau_scale for val in self.tau_vec],     label=    'tau*'+str(tau_scale)+'[Nm]')
+        plt.plot(self.t_vec, [val*tau_scale for val in self.ref_tau_vec], label='ref_tau*'+str(tau_scale)+'[Nm]')
+        plt.legend(loc='upper right', frameon=True)
+        plt.pause(0.5)
+        # plt.savefig('x-t.png', dpi=300, facecolor='white', transparent=False, format="png")
+
+class ExhaustiveSearchInterface(object):
+    def __init__(self):
+        self.jia = JointImpactAnalyzer()
+
+    def initialize_plot(self):
+        # 3D
+        self.cmap = 'hsv'
+        self.fig = plt.figure()
+        # self.ax = Axes3D(self.fig)
+        self.ax = self.fig.gca(projection='3d')
+        self.fig.set_size_inches((8.0,8.0))
+        self.fig.subplots_adjust(left=-0.05,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)
+        self.fontsize = 35
+
+        # label
+        label_fontsize_rate = 1.1
+        self.ax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.ax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.ax.set_zlabel(r'$\tau_{\mathrm{max}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+
+        # ticks
+        tics_fontsize_rate = 0.8
+        # self.ax.axes.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
+        self.ax.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
+
+        # margin between tics and axis label
+        labelpad_rate = 0.6
+        self.ax.axes.xaxis.labelpad=self.fontsize*labelpad_rate
+        self.ax.axes.yaxis.labelpad=self.fontsize*labelpad_rate
+        self.ax.axes.zaxis.labelpad=self.fontsize*labelpad_rate
+
+        # select tics position
+        self.ax.axes.xaxis.tick_top()
+        self.ax.axes.yaxis.tick_bottom()
+        self.ax.axes.zaxis.tick_top()
+
+    def plot_2d_map(self, value_list):
+        self.sweep_variables(value_list=value_list, sleep_time=0)
+
+        xg,yg,zg = self.xg, self.yg, self.zg
+        x,y,z = self.xg.flatten(), self.yg.flatten(), self.zg.flatten()
+        # x,y,z = self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], self.plot_data['max_tau']
+
+        # # 2D
+        # plt.scatter(self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], c=self.plot_data['max_tau'])
+        # plt.colorbar()
+
+        self.initialize_plot()
+
+        # divider = make_axes_locatable(self.ax)
+        # cax = divider.append_axes("top", size="5%", pad=0.3)
+
+        p = self.ax.scatter(x,y,z, c=z, cmap=self.cmap, alpha=0.7)
+        self.ax.contourf(xg, yg, zg, cmap=self.cmap, offset=-10.0)
+        # self.fig.colorbar(p, shrink=0.6, aspect=10, orientation='horizontal')
+        # self.fig.colorbar(p, shrink=0.6, aspect=10, cax=cax, orientation='horizontal')
+
+        plt.pause(0.5)
+
+    def sweep_variables(self, value_list=None, sleep_time=0.2):
+        self.value_list = (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) if value_list is None else value_list
+
+        # self.plot_data = {}
+        # for key_str,val_list in value_list:
+        #     # setattr(self, key_str+'_list', [])
+        #     self.plot_data[key_str] = []
+        # self.plot_data['max_tau'] = []
+
+        # self.sweep_variables_impl(value_list, sleep_time)
+
+        x_key,x_values = self.value_list[0]
+        y_key,y_values = self.value_list[1]
+        self.xg,self.yg = np.meshgrid(x_values,y_values)
+        self.zg = np.zeros(self.xg.shape)
+        jia = self.jia
+        for i,x_value in enumerate(x_values):
+            setattr(jia.param, x_key, x_value)
+            for j,y_value in enumerate(y_values):
+                setattr(jia.param, y_key, y_value)
+                jia.calc_variables()
+                max_tau = np.max(jia.tau_vec)
+
+                self.zg[j][i] = max_tau
+
+                print (jia.param.J,jia.param.K,jia.param.Dl), max_tau
+                # self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
+
+                time.sleep(sleep_time)
+            print ''
+
+    # def sweep_variables_impl(self, value_list, sleep_time):
+    #     if len(value_list) < 1:
+    #         self.jia.calc_variables()
+    #         max_tau = np.max(self.jia.tau_vec)
+    #         print (J,K,Dl), max_tau
+    #         # self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
+
+    #         time.sleep(sleep_time)
+    #         return max_tau
+    #     else:
+    #         key_str,values = value_list[0]
+    #         for value in values:
+    #             getattr(self, key_str+'_list').append(value)
+    #             exec(key_str + '=' + str(value), globals())
+    #             self.sweep_variables_impl(value_list[1:], sleep_time)
+
+    #         print ''
+
+if __name__ == '__main__':
+    # jia = JointImpactAnalyzer()
+    # jia.calc_variables()
+    # jia.plot_answer()
+
+    esi = ExhaustiveSearchInterface()
+    # esi.sweep_variables()
+
+    # esi.plot_2d_map( (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) )
+
+    esi.plot_2d_map( (('J', np.round(np.linspace(0.1,3, 10),1)), ('K', [1000,2000,3000,6000,25000,47000,110000])) )
