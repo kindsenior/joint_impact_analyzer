@@ -140,38 +140,46 @@ class ExhaustiveSearchInterface(object):
         self.cmap = 'hsv'
         self.fig = plt.figure()
         # self.ax = Axes3D(self.fig)
-        self.ax = self.fig.gca(projection='3d')
-        self.fig.set_size_inches((8.0,8.0))
+        self.Lax = self.fig.add_subplot(1, 2, 1, projection='3d')
+        self.Rax = self.fig.add_subplot(1, 2, 2, projection='3d')
+        self.axes = [self.Lax, self.Rax]
+
+        self.fig.set_size_inches((16.0,8.0))
         self.fig.subplots_adjust(left=-0.05,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)
         self.fontsize = 35
 
         # label
         label_fontsize_rate = 1.1
-        self.ax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.ax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.ax.set_zlabel(r'$\tau_{\mathrm{max}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_zlabel(r'$\tau_{\mathrm{max}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
-        # ticks
-        tics_fontsize_rate = 0.8
-        # self.ax.axes.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
-        self.ax.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
+        self.Rax.set_xlabel('m [kg]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_zlabel(r'$\tau_{\mathrm{design}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
-        # margin between tics and axis label
-        labelpad_rate = 0.6
-        self.ax.axes.xaxis.labelpad=self.fontsize*labelpad_rate
-        self.ax.axes.yaxis.labelpad=self.fontsize*labelpad_rate
-        self.ax.axes.zaxis.labelpad=self.fontsize*labelpad_rate
+        for ax in self.axes:
+            # ticks
+            tics_fontsize_rate = 0.8
+            # ax.axes.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
+            ax.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
 
-        # select tics position
-        self.ax.axes.xaxis.tick_top()
-        self.ax.axes.yaxis.tick_bottom()
-        self.ax.axes.zaxis.tick_top()
+            # margin between tics and axis label
+            labelpad_rate = 0.6
+            ax.axes.xaxis.labelpad=self.fontsize*labelpad_rate
+            ax.axes.yaxis.labelpad=self.fontsize*labelpad_rate
+            ax.axes.zaxis.labelpad=self.fontsize*labelpad_rate
+
+            # select tics position
+            ax.axes.xaxis.tick_top()
+            ax.axes.yaxis.tick_bottom()
+            ax.axes.zaxis.tick_top()
 
     def plot_2d_map(self, value_list):
         self.sweep_variables(value_list=value_list, sleep_time=0)
 
-        xg,yg,zg = self.xg, self.yg, self.zg
-        x,y,z = self.xg.flatten(), self.yg.flatten(), self.zg.flatten()
+        x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.z_grid
+        x,y,z = self.x_grid.flatten(), self.y_grid.flatten(), self.z_grid.flatten()
         # x,y,z = self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], self.plot_data['max_tau']
 
         # # 2D
@@ -183,10 +191,15 @@ class ExhaustiveSearchInterface(object):
         # divider = make_axes_locatable(self.ax)
         # cax = divider.append_axes("top", size="5%", pad=0.3)
 
-        p = self.ax.scatter(x,y,z, c=z, cmap=self.cmap, alpha=0.7)
-        self.ax.contourf(xg, yg, zg, cmap=self.cmap, offset=-10.0)
+        p = self.Lax.scatter(x,y,z, c=z, cmap=self.cmap, alpha=0.7)
+        self.Lax.contourf(x_grid, y_grid, z_grid, cmap=self.cmap, offset=-10.0)
         # self.fig.colorbar(p, shrink=0.6, aspect=10, orientation='horizontal')
         # self.fig.colorbar(p, shrink=0.6, aspect=10, cax=cax, orientation='horizontal')
+
+        m_grid,design_tau_grid = self.m_grid, self.design_tau_grid
+        m,design_tau = self.m_grid.flatten(), self.design_tau_grid.flatten()
+        p = self.Rax.scatter(m,y,design_tau, c=design_tau, cmap=self.cmap, alpha=0.7)
+        self.Rax.contourf(m_grid, y_grid, design_tau_grid, cmap=self.cmap, offset=-10.0)
 
         plt.pause(0.5)
 
@@ -203,19 +216,29 @@ class ExhaustiveSearchInterface(object):
 
         x_key,x_values = self.value_list[0]
         y_key,y_values = self.value_list[1]
-        self.xg,self.yg = np.meshgrid(x_values,y_values)
-        self.zg = np.zeros(self.xg.shape)
+        self.x_grid,self.y_grid = np.meshgrid(x_values,y_values)
+        self.z_grid = np.zeros(self.x_grid.shape)
+        self.m_grid = np.zeros(self.x_grid.shape)
+        self.design_tau_grid = np.zeros(self.x_grid.shape)
         jia = self.jia
         for i,x_value in enumerate(x_values):
             setattr(jia.param, x_key, x_value)
             for j,y_value in enumerate(y_values):
                 setattr(jia.param, y_key, y_value)
                 jia.calc_variables()
-                max_tau = np.max(jia.tau_vec)
+                impact_tau = np.max(jia.tau_vec)
 
-                self.zg[j][i] = max_tau
+                self.z_grid[j][i] = impact_tau
 
-                print (jia.param.J,jia.param.K,jia.param.Dl), max_tau
+                a,b = 0.3,0.7 # not negative
+                # a,b = 0.3,2 # not negative
+                safety_factor = 2.0 # safety factor
+                design_tau = impact_tau/safety_factor
+                self.m_grid[j][i] = ( jia.param.J/(a*design_tau**2) )**(-1.0/b)
+                # self.m_grid[j][i] = ( jia.param.J/(a*design_tau) )**(-1.0/b)
+                self.design_tau_grid[j][i] = design_tau
+
+                print (jia.param.J,jia.param.K,jia.param.Dl), impact_tau
                 # self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
 
                 time.sleep(sleep_time)
@@ -224,12 +247,12 @@ class ExhaustiveSearchInterface(object):
     # def sweep_variables_impl(self, value_list, sleep_time):
     #     if len(value_list) < 1:
     #         self.jia.calc_variables()
-    #         max_tau = np.max(self.jia.tau_vec)
-    #         print (J,K,Dl), max_tau
+    #         impact_tau = np.max(self.jia.tau_vec)
+    #         print (J,K,Dl), impact_tau
     #         # self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
 
     #         time.sleep(sleep_time)
-    #         return max_tau
+    #         return impact_tau
     #     else:
     #         key_str,values = value_list[0]
     #         for value in values:
