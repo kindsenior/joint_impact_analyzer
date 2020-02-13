@@ -196,13 +196,9 @@ class ExhaustiveSearchInterface(object):
         # plt.scatter(self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], c=self.plot_data['max_tau'])
         # plt.colorbar()
 
-        # divider = make_axes_locatable(self.ax)
-        # cax = divider.append_axes("top", size="5%", pad=0.3)
-
         p = self.Lax.scatter(x,y,z, c=z, cmap=self.cmap, alpha=0.7)
-        self.Lax.contourf(x_grid, y_grid, z_grid, cmap=self.cmap, offset=-10.0)
+        # self.Lax.contourf(x_grid, y_grid, z_grid, cmap=self.cmap, offset=-10.0)
         # self.fig.colorbar(p, shrink=0.6, aspect=10, orientation='horizontal')
-        # self.fig.colorbar(p, shrink=0.6, aspect=10, cax=cax, orientation='horizontal')
 
         m_grid,design_tau_grid = self.m_grid, self.design_tau_grid
         m,design_tau = self.m_grid.flatten(), self.design_tau_grid.flatten()
@@ -244,11 +240,13 @@ class ExhaustiveSearchInterface(object):
                 self.m_grid[j][i] = ( jia.param.J/(jia.param.a*design_tau**2) )**(-1.0/jia.param.b)
                 self.design_tau_grid[j][i] = design_tau
 
-                print (jia.param.J,jia.param.K,jia.param.Dl), impact_tau
-                # self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
+                J,K,Dl = jia.param.J,jia.param.K,jia.param.Dl
+                print (J,K,Dl), ' m:', self.m_grid[j][i], ' tau:', impact_tau
+                if plot_2d: self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
 
                 time.sleep(sleep_time)
             print ''
+        print ''
 
     # def sweep_variables_impl(self, value_list, sleep_time):
     #     if len(value_list) < 1:
