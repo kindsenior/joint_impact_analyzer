@@ -140,6 +140,7 @@ class JointImpactAnalyzer(object):
 class ExhaustiveSearchInterface(object):
     def __init__(self):
         self.jia = JointImpactAnalyzer()
+        self.initialize_plot()
 
     def initialize_plot(self):
         # 3D
@@ -154,15 +155,7 @@ class ExhaustiveSearchInterface(object):
         self.fig.subplots_adjust(left=-0.05,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)
         self.fontsize = 35
 
-        # label
-        label_fontsize_rate = 1.1
-        self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Lax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Lax.set_zlabel(r'$\tau_{\mathrm{max}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
-        self.Rax.set_xlabel('m [kg]',fontsize=self.fontsize*label_fontsize_rate)
-        self.Rax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Rax.set_zlabel(r'$\tau_{\mathrm{design}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
         for ax in self.axes:
             # ticks
@@ -181,6 +174,17 @@ class ExhaustiveSearchInterface(object):
             ax.axes.yaxis.tick_bottom()
             ax.axes.zaxis.tick_top()
 
+    def update_plot_conf(self):
+        # label
+        label_fontsize_rate = 1.1
+        self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_zlabel(r'$\tau_{\mathrm{max}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+
+        self.Rax.set_xlabel('m [kg]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_zlabel(r'$\tau_{\mathrm{design}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+
     def plot_2d_map(self, value_list):
         self.sweep_variables(value_list=value_list, sleep_time=0)
 
@@ -191,8 +195,6 @@ class ExhaustiveSearchInterface(object):
         # # 2D
         # plt.scatter(self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], c=self.plot_data['max_tau'])
         # plt.colorbar()
-
-        self.initialize_plot()
 
         # divider = make_axes_locatable(self.ax)
         # cax = divider.append_axes("top", size="5%", pad=0.3)
@@ -211,6 +213,8 @@ class ExhaustiveSearchInterface(object):
 
     def sweep_variables(self, value_list=None, sleep_time=0.2):
         self.value_list = (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) if value_list is None else value_list
+
+        self.update_plot_conf()
 
         # self.plot_data = {}
         # for key_str,val_list in value_list:
