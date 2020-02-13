@@ -35,6 +35,12 @@ class JointParam(object):
         self.l = 0.4/sqrt(2)
         self.m = 70.0*0.5 # for double support phase
 
+        # self.a,self.b = 0.3*1e-4,0.7 # not negative
+        # self.a,self.b = 2.3e-4,0.7 # EC-max
+        self.a,self.b = 7e-5,0.8 # EC-4pole
+        # self.a,self.b = 0.3,2 # not negative
+        self.safety_factor = 2.0 # safety factor
+
 class JointImpactAnalyzer(object):
     def __init__(self):
         self.param = JointParam()
@@ -230,12 +236,8 @@ class ExhaustiveSearchInterface(object):
 
                 self.z_grid[j][i] = impact_tau
 
-                a,b = 0.3,0.7 # not negative
-                # a,b = 0.3,2 # not negative
-                safety_factor = 2.0 # safety factor
-                design_tau = impact_tau/safety_factor
-                self.m_grid[j][i] = ( jia.param.J/(a*design_tau**2) )**(-1.0/b)
-                # self.m_grid[j][i] = ( jia.param.J/(a*design_tau) )**(-1.0/b)
+                design_tau = impact_tau/jia.param.safety_factor
+                self.m_grid[j][i] = ( jia.param.J/(jia.param.a*design_tau**2) )**(-1.0/jia.param.b)
                 self.design_tau_grid[j][i] = design_tau
 
                 print (jia.param.J,jia.param.K,jia.param.Dl), impact_tau
