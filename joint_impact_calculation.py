@@ -279,13 +279,42 @@ class ExhaustiveSearchInterface(object):
     #         print ''
 
 if __name__ == '__main__':
-    # jia = JointImpactAnalyzer()
-    # jia.calc_variables()
-    # jia.plot_answer()
 
-    esi = ExhaustiveSearchInterface()
-    # esi.sweep_variables()
+    # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
+    value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 5)**2, np.linspace(2**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(1.1**0.5,2**0.5, 5)**2, np.linspace(2.1**0.5,1000**0.5, 5)**2]),2)),
+                   # ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
+                   ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
+    esi0 = ExhaustiveSearchInterface()
+    esi0.jia.param.a, esi0.jia.param.b = 2.3e-4, 0.69 # EC-max
+    esi0.rx_max = 3
+    esi0.jia.param.Dl = 0.0
+    esi0.plot_3d_map( value_range )
 
-    # esi.plot_2d_map( (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) )
+    esi1 = ExhaustiveSearchInterface()
+    esi1.jia.param.a, esi1.jia.param.b = 7.1e-5, 0.80 # EC-4pole
+    esi1.rx_max = 3
+    esi1.jia.param.Dl = 0.0
+    esi1.plot_3d_map( value_range )
 
-    esi.plot_2d_map( (('J', np.round(np.linspace(0.1,3, 10),1)), ('K', [1000,2000,3000,6000,25000,47000,110000])) )
+    esi2 = ExhaustiveSearchInterface()
+    esi2.jia.param.a, esi2.jia.param.b = 7.6e-5, 0.56 # EC-i
+    esi2.rx_max = 3
+    esi2.jia.param.Dl = 0.0
+    esi2.plot_3d_map( value_range )
+
+    # # damping
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,0.5**0.5, 5)**2, np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
+    #                ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
+    # esi3 = ExhaustiveSearchInterface()
+    # esi3.jia.param.a, esi3.jia.param.b = 7.1e-5, 0.80 # EC-4pole
+    # esi3.rx_max = 3
+    # esi3.jia.param.Dl = 10.0
+    # esi3.plot_3d_map( value_range )
+
+    # esi4 = ExhaustiveSearchInterface()
+    # esi4.jia.param.a, esi4.jia.param.b = 7.1e-5, 0.80 # EC-4pole
+    # esi4.rx_max = 20.0
+    # esi4.jia.param.Dl = 10.0
+    # esi4.plot_3d_map( value_range )
