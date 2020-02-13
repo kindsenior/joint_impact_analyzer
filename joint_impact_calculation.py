@@ -186,7 +186,7 @@ class ExhaustiveSearchInterface(object):
         self.Rax.set_zlabel(r'$\tau_{\mathrm{design}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
     def plot_2d_map(self, value_list):
-        self.sweep_variables(value_list=value_list, sleep_time=0)
+        self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
 
         x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.z_grid
         x,y,z = self.x_grid.flatten(), self.y_grid.flatten(), self.z_grid.flatten()
@@ -207,7 +207,7 @@ class ExhaustiveSearchInterface(object):
 
         plt.pause(0.5)
 
-    def sweep_variables(self, value_list=None, sleep_time=0.2):
+    def sweep_variables(self, value_list=None, sleep_time=0.2, plot_2d=False):
         self.value_list = (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) if value_list is None else value_list
 
         self.update_plot_conf()
