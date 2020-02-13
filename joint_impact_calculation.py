@@ -39,7 +39,7 @@ class JointParam(object):
         # self.a,self.b = 2.3e-4,0.7 # EC-max
         self.a,self.b = 7e-5,0.8 # EC-4pole
         # self.a,self.b = 0.3,2 # not negative
-        self.safety_factor = 2.0 # safety factor
+        self.safety_factor = 1.0 # safety factor
 
 class JointImpactAnalyzer(object):
     def __init__(self):
