@@ -236,7 +236,7 @@ class ExhaustiveSearchInterface(object):
 
                 self.z_grid[j][i] = impact_tau
 
-                design_tau = impact_tau/jia.param.safety_factor
+                design_tau = impact_tau*jia.param.safety_factor
                 self.m_grid[j][i] = ( jia.param.J/(jia.param.a*design_tau**2) )**(-1.0/jia.param.b)
                 self.design_tau_grid[j][i] = design_tau
 
