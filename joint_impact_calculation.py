@@ -155,7 +155,9 @@ class ExhaustiveSearchInterface(object):
         self.fig.subplots_adjust(left=-0.05,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)
         self.fontsize = 35
 
-
+        self.lx_max = 1.0
+        self.rx_max = 500
+        self.rz_max = 1000
 
         for ax in self.axes:
             # ticks
@@ -189,21 +191,31 @@ class ExhaustiveSearchInterface(object):
         self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
 
         x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.z_grid
-        x,y,z = self.x_grid.flatten(), self.y_grid.flatten(), self.z_grid.flatten()
+        x,y,z = x_grid.flatten(), y_grid.flatten(), z_grid.flatten()
         # x,y,z = self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], self.plot_data['max_tau']
 
         # # 2D
         # plt.scatter(self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], c=self.plot_data['max_tau'])
         # plt.colorbar()
 
-        p = self.Lax.scatter(x,y,z, c=z, cmap=self.cmap, alpha=0.7)
+        lx_max = self.lx_max
+        self.Lax.set_xlim3d(0,min(lx_max,np.max(x_grid)))
+        z_limited = np.where(x>lx_max, 0,z)
+        p = self.Lax.scatter(np.clip(x, 0,lx_max),y,z_limited, c=z_limited, cmap=self.cmap, alpha=0.7)
+        self.Lax.plot_surface(np.clip(x_grid, 0,lx_max),
+                              y_grid,
+                              np.where(x_grid>lx_max, 0,z_grid),
+                              cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='black')
         # self.Lax.contourf(x_grid, y_grid, z_grid, cmap=self.cmap, offset=-10.0)
         # self.fig.colorbar(p, shrink=0.6, aspect=10, orientation='horizontal')
-
-        m_grid,design_tau_grid = self.m_grid, self.design_tau_grid
-        m,design_tau = self.m_grid.flatten(), self.design_tau_grid.flatten()
-        p = self.Rax.scatter(m,y,design_tau, c=design_tau, cmap=self.cmap, alpha=0.7)
-        self.Rax.contourf(m_grid, y_grid, design_tau_grid, cmap=self.cmap, offset=-10.0)
+        rx_max,rz_max = self.rx_max,self.rz_max
+        # self.Rax.set_xlim3d(0,rx_max)
+        m_grid,design_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(self.design_tau_grid, 0,rz_max)
+        # m_grid = np.log(m_grid)
+        m,design_tau = m_grid.flatten(), design_tau_grid.flatten()
+        # surface
+        p = self.Rax.scatter(m, y, design_tau, c=design_tau, cmap=self.cmap, alpha=0.7)
+        self.Rax.plot_surface(m_grid, y_grid, design_tau_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='black')
 
         plt.pause(0.5)
 
