@@ -41,6 +41,12 @@ class JointParam(object):
         # self.a,self.b = 0.3,2 # not negative
         self.safety_factor = 1.0 # safety factor
 
+class JointSample(object):
+    def __init__(self, Jm=33.3*1e-7, motor_max_tq=0.104):
+        self.Jm = Jm
+        self.motor_max_tq = motor_max_tq
+        self.data = None
+
 class JointImpactAnalyzer(object):
     def __init__(self):
         self.param = JointParam()
@@ -142,14 +148,12 @@ class ExhaustiveSearchInterface(object):
         self.jia = JointImpactAnalyzer()
         self.initialize_plot()
 
+        self.joint_samples = {}
+
     def initialize_plot(self):
         # 3D
         self.cmap = 'hsv'
         self.fig = plt.figure()
-        # self.ax = Axes3D(self.fig)
-        self.Lax = self.fig.add_subplot(1, 2, 1, projection='3d')
-        self.Rax = self.fig.add_subplot(1, 2, 2, projection='3d')
-        self.axes = [self.Lax, self.Rax]
 
         self.fig.set_size_inches((16.0,8.0))
         self.fig.subplots_adjust(left=-0.05,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)
@@ -159,6 +163,8 @@ class ExhaustiveSearchInterface(object):
         self.rx_max = 500
         self.rz_max = 1000
 
+    def update_plot_conf(self):
+        # 3D
         for ax in self.axes:
             # ticks
             tics_fontsize_rate = 0.8
@@ -169,34 +175,35 @@ class ExhaustiveSearchInterface(object):
             labelpad_rate = 0.6
             ax.axes.xaxis.labelpad=self.fontsize*labelpad_rate
             ax.axes.yaxis.labelpad=self.fontsize*labelpad_rate
-            ax.axes.zaxis.labelpad=self.fontsize*labelpad_rate
+            if hasattr(ax.axes,'zaxis'): ax.axes.zaxis.labelpad=self.fontsize*labelpad_rate
 
             # select tics position
-            ax.axes.xaxis.tick_top()
-            ax.axes.yaxis.tick_bottom()
-            ax.axes.zaxis.tick_top()
+            if hasattr(ax.axes,'zaxis'):
+                ax.axes.xaxis.tick_top()
+                ax.axes.yaxis.tick_bottom()
+                ax.axes.zaxis.tick_top()
 
-    def update_plot_conf(self):
+    def plot_3d_map(self, value_list, num_tau=1):
+        self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False, num_tau=num_tau)
+
+        # axis
+        if not hasattr(self,'Lax'): self.Lax = self.fig.add_subplot(1, 2, 1, projection='3d')
+        if not hasattr(self,'Rax'): self.Rax = self.fig.add_subplot(1, 2, 2, projection='3d')
+        self.axes = [self.Lax, self.Rax]
+        self.update_plot_conf()
         # label
         label_fontsize_rate = 1.1
         self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
         self.Lax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Lax.set_zlabel(r'$\tau_{\mathrm{max}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_zlabel(r'$\tau_{\mathrm{max}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
         self.Rax.set_xlabel('m [kg]',fontsize=self.fontsize*label_fontsize_rate)
         self.Rax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Rax.set_zlabel(r'$\tau_{\mathrm{design}}$: [Nm]',fontsize=self.fontsize*label_fontsize_rate)
-
-    def plot_2d_map(self, value_list):
-        self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
+        self.Rax.set_zlabel(r'$\tau_{\mathrm{redu}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
         x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.z_grid
+        y_grid = np.log(y_grid)
         x,y,z = x_grid.flatten(), y_grid.flatten(), z_grid.flatten()
-        # x,y,z = self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], self.plot_data['max_tau']
-
-        # # 2D
-        # plt.scatter(self.plot_data[value_list[0][0]], self.plot_data[value_list[1][0]], c=self.plot_data['max_tau'])
-        # plt.colorbar()
 
         lx_max = self.lx_max
         self.Lax.set_xlim3d(0,min(lx_max,np.max(x_grid)))
@@ -206,31 +213,58 @@ class ExhaustiveSearchInterface(object):
                               y_grid,
                               np.where(x_grid>lx_max, 0,z_grid),
                               cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='black')
-        # self.Lax.contourf(x_grid, y_grid, z_grid, cmap=self.cmap, offset=-10.0)
-        # self.fig.colorbar(p, shrink=0.6, aspect=10, orientation='horizontal')
         rx_max,rz_max = self.rx_max,self.rz_max
-        # self.Rax.set_xlim3d(0,rx_max)
         m_grid,design_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(self.design_tau_grid, 0,rz_max)
         # m_grid = np.log(m_grid)
         m,design_tau = m_grid.flatten(), design_tau_grid.flatten()
+
         # surface
         p = self.Rax.scatter(m, y, design_tau, c=design_tau, cmap=self.cmap, alpha=0.7)
         self.Rax.plot_surface(m_grid, y_grid, design_tau_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='black')
 
+        # # masked domain
+        # # m_mask = self.m_3d_grid < 400
+        # m_mask = self.m_3d_grid > 0
+        # m_3d,design_tau_3d,y_3d = self.m_3d_grid[m_mask].flatten(), self.design_tau_3d_grid[m_mask].flatten(), self.y_3d_grid[m_mask].flatten()
+        # p = self.Rax.scatter(m_3d,y_3d,design_tau_3d, c=design_tau_3d, cmap=self.cmap, alpha=0.7)
+
         plt.pause(0.5)
 
-    def sweep_variables(self, value_list=None, sleep_time=0.2, plot_2d=False):
+    def plot_sample_values(self, value_list):
+        self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
+
+        # fig
+        self.fig.subplots_adjust(left=0.1,right=0.98, bottom=0.12,top=0.95, wspace=0.1, hspace=1)
+        # axis
+        if not hasattr(self, 'sample_ax'): self.sample_ax = self.fig.add_subplot(1, 1, 1)
+        self.axes = [self.sample_ax]
+        self.update_plot_conf()
+        # label
+        self.sample_ax.set_xlabel(self.value_list[1][0],fontsize=self.fontsize)
+        self.sample_ax.set_ylabel(r'$\tau_{\mathrm{redu}} [Nm]$',fontsize=self.fontsize)
+        # margin
+        self.sample_ax.xaxis.labelpad=0
+        self.sample_ax.yaxis.labelpad=0
+        # grid
+        self.sample_ax.grid()
+        # limit
+        self.sample_ax.set_ylim(0,1000)
+        # scale
+        self.sample_ax.set_xscale('log')
+
+        for sample_key,joint_sample in self.joint_samples.items():
+            # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label=sample_key)
+            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label=sample_key)
+        # legend
+        self.sample_ax.legend(fontsize=self.fontsize*0.8)
+
+        plt.pause(0.5)
+
+    def sweep_variables(self, value_list=None, sleep_time=0.2, plot_2d=False, num_tau=1):
         self.value_list = (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) if value_list is None else value_list
 
-        self.update_plot_conf()
-
-        # self.plot_data = {}
-        # for key_str,val_list in value_list:
-        #     # setattr(self, key_str+'_list', [])
-        #     self.plot_data[key_str] = []
-        # self.plot_data['max_tau'] = []
-
-        # self.sweep_variables_impl(value_list, sleep_time)
+        for key_str,values in value_list:
+            setattr(self, key_str+'_values', values)
 
         x_key,x_values = self.value_list[0]
         y_key,y_values = self.value_list[1]
@@ -238,11 +272,15 @@ class ExhaustiveSearchInterface(object):
         self.z_grid = np.zeros(self.x_grid.shape)
         self.m_grid = np.zeros(self.x_grid.shape)
         self.design_tau_grid = np.zeros(self.x_grid.shape)
+
+        for joint_sample in self.joint_samples.values():
+            joint_sample.data = np.empty_like(y_values)
+
         jia = self.jia
-        for i,x_value in enumerate(x_values):
-            setattr(jia.param, x_key, x_value)
-            for j,y_value in enumerate(y_values):
-                setattr(jia.param, y_key, y_value)
+        for j,y_value in enumerate(y_values): # y loop
+            setattr(jia.param, y_key, y_value)
+            for i,x_value in enumerate(x_values): # x loop
+                setattr(jia.param, x_key, x_value)
                 jia.calc_variables()
                 impact_tau = np.max(jia.tau_vec)
 
@@ -257,6 +295,15 @@ class ExhaustiveSearchInterface(object):
                 if plot_2d: self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
 
                 time.sleep(sleep_time)
+
+            print y_value
+            for sample_str,joint_sample in self.joint_samples.items():
+                tau_vec = self.z_grid[j]
+                estimated_tau_vec = ( self.J_values*(joint_sample.motor_max_tq**2/joint_sample.Jm) )**0.5 # = ( Jk*(max_tq^2/Jm) )^0.5
+                idx = np.append(np.where( abs(tau_vec - estimated_tau_vec) < abs(tau_vec)*0.05 )[0],0).max()
+                print sample_str+': '+str(idx)+' J:'+str(self.J_values[idx])
+                joint_sample.data[j] = tau_vec[idx]
+
             print ''
         print ''
 
@@ -318,3 +365,18 @@ if __name__ == '__main__':
     # esi4.rx_max = 20.0
     # esi4.jia.param.Dl = 10.0
     # esi4.plot_3d_map( value_range )
+
+    # sample joint
+    esi5 = ExhaustiveSearchInterface()
+    esi5.joint_samples = {
+        'EC-4pole 200W 36V': JointSample(Jm=33.3*1e-7, motor_max_tq=0.104),
+        # 'EC-4pole 200W 36V(double)':JointSample(Jm=33.3*1e-7*2, motor_max_tq=0.104*2),
+        'EC-i 100W 36V': JointSample(Jm=44.0*1e-7, motor_max_tq=0.204),
+        'EC-max 60W 36V': JointSample(Jm=21.9*1e-7, motor_max_tq=0.0675),
+        }
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
+    value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
+                   # ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
+                   ('K', [7,8,10,15,30,60,100,200,300,1000,2000,3000,6000,15000,25000]))
+    esi5.jia.param.Dl = 0
+    esi5.plot_sample_values(value_range)
