@@ -166,6 +166,8 @@ class ExhaustiveSearchInterface(object):
     def update_plot_conf(self):
         # 3D
         for ax in self.axes:
+            # clear
+            ax.cla()
             # ticks
             tics_fontsize_rate = 0.8
             # ax.axes.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
@@ -183,8 +185,8 @@ class ExhaustiveSearchInterface(object):
                 ax.axes.yaxis.tick_bottom()
                 ax.axes.zaxis.tick_top()
 
-    def plot_3d_map(self, value_list, num_tau=1):
-        self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False, num_tau=num_tau)
+    def plot_3d_map(self, value_list, num_tau=1, update=True):
+        if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False, num_tau=num_tau)
 
         # axis
         if not hasattr(self,'Lax'): self.Lax = self.fig.add_subplot(1, 2, 1, projection='3d')
@@ -230,8 +232,8 @@ class ExhaustiveSearchInterface(object):
 
         plt.pause(0.5)
 
-    def plot_sample_values(self, value_list):
-        self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
+    def plot_sample_values(self, value_list, update=True):
+        if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
 
         # fig
         self.fig.subplots_adjust(left=0.1,right=0.98, bottom=0.12,top=0.95, wspace=0.1, hspace=1)
