@@ -47,6 +47,9 @@ class JointSample(object):
         self.motor_max_tq = motor_max_tq
         self.data = None
 
+    def Jtau_coeff(self):
+        return self.Jm/self.motor_max_tq**2
+
 class JointImpactAnalyzer(object):
     def __init__(self):
         self.param = JointParam()
@@ -256,7 +259,7 @@ class ExhaustiveSearchInterface(object):
 
         for sample_key,joint_sample in self.joint_samples.items():
             # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label=sample_key)
-            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label=sample_key)
+            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{0}={1:.3e} ({2})'.format(r'$\alpha_{J-\tau}$',joint_sample.Jtau_coeff(),sample_key))
         # legend
         self.sample_ax.legend(fontsize=self.fontsize*0.8)
 
@@ -375,6 +378,7 @@ if __name__ == '__main__':
         # 'EC-4pole 200W 36V(double)':JointSample(Jm=33.3*1e-7*2, motor_max_tq=0.104*2),
         'EC-i 100W 36V': JointSample(Jm=44.0*1e-7, motor_max_tq=0.204),
         'EC-max 60W 36V': JointSample(Jm=21.9*1e-7, motor_max_tq=0.0675),
+        'ILM70x10': JointSample(Jm=0.21*1e-4, motor_max_tq=0.74)
         }
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
