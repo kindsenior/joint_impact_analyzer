@@ -193,8 +193,8 @@ class ExhaustiveSearchInterface(object):
 
             # select tics position
             if hasattr(ax.axes,'zaxis'):
-                ax.axes.xaxis.tick_top()
-                ax.axes.yaxis.tick_bottom()
+                ax.axes.xaxis.tick_bottom()
+                ax.axes.yaxis.tick_top()
                 ax.axes.zaxis.tick_top()
 
     def plot_3d_map(self, value_list, num_tau=1, update=True, clear=True):
@@ -206,19 +206,29 @@ class ExhaustiveSearchInterface(object):
         self.axes = [self.Lax, self.Rax]
         self.update_plot_conf(clear=clear)
         # figure
-        map((lambda ax: ax.figure.subplots_adjust(left=0.0,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)), self.axes)
+        map((lambda ax: ax.figure.subplots_adjust(left=0.0,right=0.95, bottom=0.05,top=1, wspace=0.1, hspace=1)), self.axes)
         # label
-        label_fontsize_rate = 1.1
-        self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Lax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Lax.set_zlabel(r'$\tau_{\mathrm{max}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+        label_fontsize_rate = 0.9
+        # self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
+        # self.Lax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_xlabel('$'+self.value_list[0][0]+'_\mathrm{jnt}$ [kgm$^2$]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_ylabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Lax.set_zlabel(r'$_{\mathrm{max}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
-        self.Rax.set_xlabel('m [kg]',fontsize=self.fontsize*label_fontsize_rate)
-        self.Rax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
-        self.Rax.set_zlabel(r'$\tau_{\mathrm{redu}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+        # self.Rax.set_xlabel('m [kg]',fontsize=self.fontsize*label_fontsize_rate)
+        # self.Rax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_xlabel('$M_\mathrm{mot}$ [kg]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_ylabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_zlabel(r'$_{\mathrm{cnt}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
         x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.z_grid
-        y_grid = np.log(y_grid)
+
+        # log settings
+        y_grid = np.log10(y_grid)
+        max_exp = np.ceil(np.log10(np.max(self.y_grid[:,0])))
+        self.Lax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
+        self.Rax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
+
         x,y,z = x_grid.flatten(), y_grid.flatten(), z_grid.flatten()
 
         lx_max = self.lx_max
@@ -237,7 +247,7 @@ class ExhaustiveSearchInterface(object):
                               color=self.color_list[self.color_index_list[0]], linewidth=1, alpha=0, edgecolors=self.color_list[self.color_index_list[0]])
         rx_max,rz_max = self.rx_max,self.rz_max
         m_grid,design_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(self.design_tau_grid, 0,rz_max)
-        # m_grid = np.log(m_grid)
+        # m_grid = np.log10(m_grid)
         m,design_tau = m_grid.flatten(), design_tau_grid.flatten()
 
         # legend by dummy plot
@@ -249,7 +259,7 @@ class ExhaustiveSearchInterface(object):
             tmp_fake_plot_list = [mpl.lines.Line2D([0],[0], linestyle=linestyle, linewidth=linewidth, c=handle.get_color()) for handle in self.Lax.legend_.legendHandles]
             tmp_text_list = [text.get_text() for text in self.Lax.legend_.texts]
         tmp_fake_plot_list.append( mpl.lines.Line2D([0],[0], linestyle=linestyle, linewidth=linewidth, c=self.color_list[self.color_index_list[0]]) )
-        tmp_text_list.append( 'Dj='+str(self.jia.param.Dl)+' [Nms/rad]' )
+        tmp_text_list.append( '{0}={1} [Nms/rad]'.format(r'$D_\mathrm{jnt}$',self.jia.param.Dl ) )
         self.Lax.legend(tmp_fake_plot_list, tmp_text_list, numpoints=1, fontsize=self.fontsize*0.6)
 
         # M map
@@ -274,8 +284,9 @@ class ExhaustiveSearchInterface(object):
         # figure
         self.sample_ax.figure.subplots_adjust(left=0.1,right=0.98, bottom=0.12,top=0.95, wspace=0.1, hspace=1)
         # label
-        self.sample_ax.set_xlabel(self.value_list[1][0],fontsize=self.fontsize)
-        self.sample_ax.set_ylabel(r'$\tau_{\mathrm{redu}} [Nm]$',fontsize=self.fontsize)
+        # self.sample_ax.set_xlabel(self.value_list[1][0],fontsize=self.fontsize)
+        self.sample_ax.set_xlabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize*label_fontsize_rate)
+        self.sample_ax.set_ylabel(r'$_{\mathrm{cont}}\tau_{\mathrm{jnt}} [Nm]$',fontsize=self.fontsize)
         # margin
         self.sample_ax.xaxis.labelpad=0
         self.sample_ax.yaxis.labelpad=0
@@ -285,6 +296,8 @@ class ExhaustiveSearchInterface(object):
         self.sample_ax.set_ylim(0,1000)
         # scale
         self.sample_ax.set_xscale('log')
+        max_exp = np.ceil(np.log10(np.max(self.y_grid[:,0])))
+        self.sample_ax.set_xticklabels(['$10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
 
         for sample_key,joint_sample in self.joint_samples.items():
             # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label=sample_key)
