@@ -377,7 +377,8 @@ if __name__ == '__main__':
     format_str = '{motor_name}_Dj{Dj:.0f}'
     # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
-    value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 5)**2, np.linspace(2**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
+    value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,0.5**0.5, 5)**2, [0.7,0.85], np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 5)**2, np.linspace(2**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(1.1**0.5,2**0.5, 5)**2, np.linspace(2.1**0.5,1000**0.5, 5)**2]),2)),
                    # ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
                    ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
@@ -434,7 +435,7 @@ if __name__ == '__main__':
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     # # damping
-    # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,0.5**0.5, 5)**2, np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,0.5**0.5, 5)**2, [0.7,0.85], np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
     #                ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
     # esi3 = ExhaustiveSearchInterface()
     # esi3.jia.param.a, esi3.jia.param.b = 7.1e-5, 0.80 # EC-4pole
@@ -464,7 +465,8 @@ if __name__ == '__main__':
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
                    # ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
-                   ('K', [7,8,10,15,30,60,100,200,300,1000,2000,3000,6000,15000,25000]))
+                   # ('K', [7,8,10,15,30,60,100,200,300,1000,2000,3000,6000,15000,25000]))
+                   ('K', [7,8,10,15,30,60,100,120,150,200,300,1000,2000,3000,6000,15000,25000]))
     esi5.jia.param.Dl = 0
     esi5.plot_sample_values(value_range)
     esi5.sample_ax.figure.savefig('spesific-motor-joint-impact-map'+ext)
