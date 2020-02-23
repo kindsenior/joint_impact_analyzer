@@ -157,10 +157,7 @@ class ExhaustiveSearchInterface(object):
         # 3D
         self.cmap = 'hsv'
         self.color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        self.fig = plt.figure()
 
-        self.fig.set_size_inches((16.0,8.0))
-        self.fig.subplots_adjust(left=-0.05,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)
         self.fontsize = 35
 
         self.lx_max = 1.0
@@ -204,10 +201,12 @@ class ExhaustiveSearchInterface(object):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False, num_tau=num_tau)
 
         # axis
-        if not hasattr(self,'Lax'): self.Lax = self.fig.add_subplot(1, 2, 1, projection='3d')
-        if not hasattr(self,'Rax'): self.Rax = self.fig.add_subplot(1, 2, 2, projection='3d')
+        if not hasattr(self,'Lax'): self.Lax = plt.figure(figsize=(8,8)).gca(projection='3d')
+        if not hasattr(self,'Rax'): self.Rax = plt.figure(figsize=(8,8)).gca(projection='3d')
         self.axes = [self.Lax, self.Rax]
         self.update_plot_conf(clear=clear)
+        # figure
+        map((lambda ax: ax.figure.subplots_adjust(left=0.0,right=0.95, bottom=0.02,top=1, wspace=0.1, hspace=1)), self.axes)
         # label
         label_fontsize_rate = 1.1
         self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
@@ -268,12 +267,12 @@ class ExhaustiveSearchInterface(object):
     def plot_sample_values(self, value_list, update=True):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
 
-        # fig
-        self.fig.subplots_adjust(left=0.1,right=0.98, bottom=0.12,top=0.95, wspace=0.1, hspace=1)
         # axis
-        if not hasattr(self, 'sample_ax'): self.sample_ax = self.fig.add_subplot(1, 1, 1)
+        if not hasattr(self, 'sample_fig'): self.sample_ax = plt.figure(figsize=(16,8)).gca()
         self.axes = [self.sample_ax]
         self.update_plot_conf()
+        # figure
+        self.sample_ax.figure.subplots_adjust(left=0.1,right=0.98, bottom=0.12,top=0.95, wspace=0.1, hspace=1)
         # label
         self.sample_ax.set_xlabel(self.value_list[1][0],fontsize=self.fontsize)
         self.sample_ax.set_ylabel(r'$\tau_{\mathrm{redu}} [Nm]$',fontsize=self.fontsize)
@@ -361,7 +360,9 @@ class ExhaustiveSearchInterface(object):
     #         print ''
 
 if __name__ == '__main__':
+    ext = '.svg'
 
+    format_str = '{motor_name}_Dj{Dj:.0f}'
     # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 5)**2, np.linspace(2**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
@@ -375,13 +376,21 @@ if __name__ == '__main__':
     esi0.plot_3d_map( value_range )
 
     esi1 = ExhaustiveSearchInterface()
+    motor_name = 'EC-4pole'
     esi1.jia.param.a, esi1.jia.param.b = 7.1e-5, 0.80 # EC-4pole
     esi1.rx_max = 3
     esi1.jia.param.Dl = 0.0
+    param_str = format_str.format(motor_name=motor_name, Dj=esi1.jia.param.Dl)
+    print param_str
     esi1.plot_3d_map( value_range )
+    esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     esi1.jia.param.Dl = 20.0
+    param_str = format_str.format(motor_name=motor_name, Dj=esi1.jia.param.Dl)
+    print param_str
     esi1.plot_3d_map( value_range, clear=[False,True] )
+    esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
+    esi1.Lax.figure.savefig('J-K-map_'+motor_name+ext)
 
     esi2 = ExhaustiveSearchInterface()
     esi2.jia.param.a, esi2.jia.param.b = 7.6e-5, 0.56 # EC-i
@@ -419,3 +428,4 @@ if __name__ == '__main__':
                    ('K', [7,8,10,15,30,60,100,200,300,1000,2000,3000,6000,15000,25000]))
     esi5.jia.param.Dl = 0
     esi5.plot_sample_values(value_range)
+    esi5.sample_ax.figure.savefig('spesific-motor-joint-impact-map'+ext)
