@@ -381,15 +381,27 @@ if __name__ == '__main__':
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(1.1**0.5,2**0.5, 5)**2, np.linspace(2.1**0.5,1000**0.5, 5)**2]),2)),
                    # ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
                    ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
+    # EC-max
     esi0 = ExhaustiveSearchInterface()
-    esi0.jia.param.a, esi0.jia.param.b = 2.3e-4, 0.69 # EC-max
+    motor_name = 'EC-max'
+    esi0.jia.param.a, esi0.jia.param.b = 2.3e-4, 0.69
     esi0.rx_max = 3
     esi0.jia.param.Dl = 0.0
+    param_str = format_str.format(motor_name=motor_name, Dj=esi0.jia.param.Dl)
+    print param_str
     esi0.plot_3d_map( value_range )
+    esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
+    esi0.jia.param.Dl = 20.0
+    param_str = format_str.format(motor_name=motor_name, Dj=esi0.jia.param.Dl)
+    print param_str
+    esi0.plot_3d_map( value_range, clear=[False,True] )
+    esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
+
+    # EC-4pole
     esi1 = ExhaustiveSearchInterface()
     motor_name = 'EC-4pole'
-    esi1.jia.param.a, esi1.jia.param.b = 7.1e-5, 0.80 # EC-4pole
+    esi1.jia.param.a, esi1.jia.param.b = 7.1e-5, 0.80
     esi1.rx_max = 3
     esi1.jia.param.Dl = 0.0
     param_str = format_str.format(motor_name=motor_name, Dj=esi1.jia.param.Dl)
@@ -404,11 +416,22 @@ if __name__ == '__main__':
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
     esi1.Lax.figure.savefig('J-K-map_'+motor_name+ext)
 
+    # EC-i
     esi2 = ExhaustiveSearchInterface()
-    esi2.jia.param.a, esi2.jia.param.b = 7.6e-5, 0.56 # EC-i
+    motor_name = 'EC-i'
+    esi2.jia.param.a, esi2.jia.param.b = 7.6e-5, 0.56
     esi2.rx_max = 3
     esi2.jia.param.Dl = 0.0
+    param_str = format_str.format(motor_name=motor_name, Dj=esi2.jia.param.Dl)
+    print param_str
     esi2.plot_3d_map( value_range )
+    esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
+
+    esi2.jia.param.Dl = 20.0
+    param_str = format_str.format(motor_name=motor_name, Dj=esi2.jia.param.Dl)
+    print param_str
+    esi2.plot_3d_map( value_range, clear=[False,True] )
+    esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     # # damping
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,0.5**0.5, 5)**2, np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
