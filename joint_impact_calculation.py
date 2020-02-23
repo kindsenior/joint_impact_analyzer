@@ -282,28 +282,26 @@ class ExhaustiveSearchInterface(object):
         self.axes = [self.sample_ax]
         self.update_plot_conf()
         # figure
-        self.sample_ax.figure.subplots_adjust(left=0.1,right=0.98, bottom=0.12,top=0.95, wspace=0.1, hspace=1)
+        self.sample_ax.figure.subplots_adjust(left=0.1,right=0.98, bottom=0.13,top=0.95, wspace=0.1, hspace=1)
         # label
         # self.sample_ax.set_xlabel(self.value_list[1][0],fontsize=self.fontsize)
-        self.sample_ax.set_xlabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize*label_fontsize_rate)
-        self.sample_ax.set_ylabel(r'$_{\mathrm{cont}}\tau_{\mathrm{jnt}} [Nm]$',fontsize=self.fontsize)
+        self.sample_ax.set_xlabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize)
+        self.sample_ax.set_ylabel(r'$_{\mathrm{cont}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize)
         # margin
         self.sample_ax.xaxis.labelpad=0
-        self.sample_ax.yaxis.labelpad=0
+        self.sample_ax.yaxis.labelpad=-10
         # grid
         self.sample_ax.grid()
         # limit
         self.sample_ax.set_ylim(0,1000)
         # scale
         self.sample_ax.set_xscale('log')
-        max_exp = np.ceil(np.log10(np.max(self.y_grid[:,0])))
-        self.sample_ax.set_xticklabels(['$10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
 
         for sample_key,joint_sample in self.joint_samples.items():
             # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label=sample_key)
-            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{0}={1:.3e} ({2})'.format(r'$\alpha_{J-\tau}$',joint_sample.Jtau_coeff(),sample_key))
+            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$\alpha_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=sample_key))
         # legend
-        self.sample_ax.legend(fontsize=self.fontsize*0.8)
+        self.sample_ax.legend(fontsize=self.fontsize*0.7)
 
         plt.pause(0.5)
 
