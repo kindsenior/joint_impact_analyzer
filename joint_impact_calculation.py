@@ -445,8 +445,8 @@ if __name__ == '__main__':
 
     # esi4 = ExhaustiveSearchInterface()
     # esi4.jia.param.a, esi4.jia.param.b = 7.1e-5, 0.80 # EC-4pole
-    # esi4.rx_max = 20.0
-    # esi4.jia.param.Dl = 10.0
+    # esi4.rx_max = 3
+    # esi4.jia.param.Dl = 20.0
     # esi4.plot_3d_map( value_range )
 
     # sample joint
