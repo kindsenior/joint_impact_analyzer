@@ -450,17 +450,18 @@ if __name__ == '__main__':
     # esi4.plot_3d_map( value_range )
 
     # sample joint
+    over_current = 10.0
     esi5 = ExhaustiveSearchInterface()
     esi5.joint_samples = [
+        JointSample(motor_name='ILM70x10 230g', Jm=0.21*1e-4, motor_max_tq=0.74), # coef=0.000038
         JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104), # coef=0.00306
-        JointSample(motor_name='EC-4pole 30 200W 36V 300g (experiment)', Jm=33.3*1e-7, motor_max_tq=0.0205*10),
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(over_current), Jm=33.3*1e-7, motor_max_tq=0.0205*over_current),
         # JointSample(motor_name='EC-4pole 30 200W 36V(double motor 600 g)', Jm=33.3*1e-7*2, motor_max_tq=0.104*2),
         JointSample(motor_name='EC-i 40  50W 36V 180g', Jm=12.8*1e-7, motor_max_tq=0.0742), # coef=0.023
         JointSample(motor_name='EC-i 40  70W 36V 250g', Jm=23.0*1e-7, motor_max_tq=0.126), # coef=0.0015
         JointSample(motor_name='EC-i 40 100W 36V 390g', Jm=44.0*1e-7, motor_max_tq=0.204), # coef=0.001
         JointSample(motor_name='EC-i 52 180W 36V 823g', Jm=170.0*1e-7, motor_max_tq=0.436), # coef=0.00089
         # JointSample(motor_name='EC-max 30 60W 36V 305g', Jm=21.9*1e-7, motor_max_tq=0.0675), # coef=0.0048
-        # JointSample(motor_name='ILM70x10 230g', Jm=0.21*1e-4, motor_max_tq=0.74), coef=0.000038
         ]
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
