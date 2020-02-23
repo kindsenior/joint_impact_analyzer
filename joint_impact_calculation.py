@@ -156,6 +156,7 @@ class ExhaustiveSearchInterface(object):
     def initialize_plot(self):
         # 3D
         self.cmap = 'hsv'
+        self.color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
         self.fig = plt.figure()
 
         self.fig.set_size_inches((16.0,8.0))
@@ -166,11 +167,22 @@ class ExhaustiveSearchInterface(object):
         self.rx_max = 500
         self.rz_max = 1000
 
-    def update_plot_conf(self):
+    def update_plot_conf(self, clear=True):
+        # clear list
+        if type(clear) == list:
+            self.clear_list = clear if len(clear) == len(self.axes) else [clear[0] for ax in self.axes]
+        else:
+            self.clear_list = [clear for ax in self.axes]
+        # color index list
+        if (not hasattr(self,'color_index_list')) or len(self.color_index_list) != len(self.axes): self.color_index_list = [-1 for ax in self.axes]
         # 3D
-        for ax in self.axes:
+        for idx,(ax,clear) in enumerate(zip(self.axes, self.clear_list)):
             # clear
-            ax.cla()
+            if clear:
+                ax.cla()
+                self.color_index_list[idx] = 0
+            else:
+                self.color_index_list[idx] = (self.color_index_list[idx] + 1) % len(self.color_list)
             # ticks
             tics_fontsize_rate = 0.8
             # ax.axes.tick_params(labelsize=self.fontsize*tics_fontsize_rate)
@@ -188,14 +200,14 @@ class ExhaustiveSearchInterface(object):
                 ax.axes.yaxis.tick_bottom()
                 ax.axes.zaxis.tick_top()
 
-    def plot_3d_map(self, value_list, num_tau=1, update=True):
+    def plot_3d_map(self, value_list, num_tau=1, update=True, clear=True):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False, num_tau=num_tau)
 
         # axis
         if not hasattr(self,'Lax'): self.Lax = self.fig.add_subplot(1, 2, 1, projection='3d')
         if not hasattr(self,'Rax'): self.Rax = self.fig.add_subplot(1, 2, 2, projection='3d')
         self.axes = [self.Lax, self.Rax]
-        self.update_plot_conf()
+        self.update_plot_conf(clear=clear)
         # label
         label_fontsize_rate = 1.1
         self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
@@ -212,20 +224,38 @@ class ExhaustiveSearchInterface(object):
 
         lx_max = self.lx_max
         self.Lax.set_xlim3d(0,min(lx_max,np.max(x_grid)))
-        z_limited = np.where(x>lx_max, 0,z)
-        p = self.Lax.scatter(np.clip(x, 0,lx_max),y,z_limited, c=z_limited, cmap=self.cmap, alpha=0.7)
-        self.Lax.plot_surface(np.clip(x_grid, 0,lx_max),
-                              y_grid,
-                              np.where(x_grid>lx_max, 0,z_grid),
-                              cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='black')
+        # z_limited = np.where(x>lx_max, 0,z)
+        # p = self.Lax.scatter(np.clip(x, 0,lx_max),y,z_limited, c=z_limited, cmap=self.cmap, alpha=0.7)
+        # self.Lax.plot_surface(np.clip(x_grid, 0,lx_max),
+        #                       y_grid,
+        #                       np.where(x_grid>lx_max, 0,z_grid),
+                              # cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='gray')
+        x_max_idx = np.max(np.where(self.x_grid[0] <= lx_max))+1
+        self.Lax.plot_surface(x_grid[:,0:x_max_idx],
+                              y_grid[:,0:x_max_idx],
+                              z_grid[:,0:x_max_idx],
+                              # color=self.color_list[self.color_index_list[0]], linewidth=0.3, alpha=0.3, edgecolors='gray', shade=True)
+                              color=self.color_list[self.color_index_list[0]], linewidth=1, alpha=0, edgecolors=self.color_list[self.color_index_list[0]])
         rx_max,rz_max = self.rx_max,self.rz_max
         m_grid,design_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(self.design_tau_grid, 0,rz_max)
         # m_grid = np.log(m_grid)
         m,design_tau = m_grid.flatten(), design_tau_grid.flatten()
 
-        # surface
-        p = self.Rax.scatter(m, y, design_tau, c=design_tau, cmap=self.cmap, alpha=0.7)
-        self.Rax.plot_surface(m_grid, y_grid, design_tau_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='black')
+        # legend by dummy plot
+        linestyle='-'; linewidth=2
+        if self.Lax.legend_ is None:
+            tmp_fake_plot_list = []
+            tmp_text_list = []
+        else:
+            tmp_fake_plot_list = [mpl.lines.Line2D([0],[0], linestyle=linestyle, linewidth=linewidth, c=handle.get_color()) for handle in self.Lax.legend_.legendHandles]
+            tmp_text_list = [text.get_text() for text in self.Lax.legend_.texts]
+        tmp_fake_plot_list.append( mpl.lines.Line2D([0],[0], linestyle=linestyle, linewidth=linewidth, c=self.color_list[self.color_index_list[0]]) )
+        tmp_text_list.append( 'Dj='+str(self.jia.param.Dl)+' [Nms/rad]' )
+        self.Lax.legend(tmp_fake_plot_list, tmp_text_list, numpoints=1, fontsize=self.fontsize*0.6)
+
+        # M map
+        # p = self.Rax.scatter(m, y, design_tau, c=design_tau, cmap=self.cmap, alpha=0.7)
+        self.Rax.plot_surface(m_grid, y_grid, design_tau_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='gray')
 
         # # masked domain
         # # m_mask = self.m_3d_grid < 400
@@ -349,6 +379,9 @@ if __name__ == '__main__':
     esi1.rx_max = 3
     esi1.jia.param.Dl = 0.0
     esi1.plot_3d_map( value_range )
+
+    esi1.jia.param.Dl = 20.0
+    esi1.plot_3d_map( value_range, clear=[False,True] )
 
     esi2 = ExhaustiveSearchInterface()
     esi2.jia.param.a, esi2.jia.param.b = 7.6e-5, 0.56 # EC-i
