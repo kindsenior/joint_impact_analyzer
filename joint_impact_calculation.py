@@ -42,7 +42,8 @@ class JointParam(object):
         self.safety_factor = 1.0 # safety factor
 
 class JointSample(object):
-    def __init__(self, Jm=33.3*1e-7, motor_max_tq=0.104):
+    def __init__(self, motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104):
+        self.motor_name = motor_name
         self.Jm = Jm
         self.motor_max_tq = motor_max_tq
         self.data = None
@@ -297,9 +298,9 @@ class ExhaustiveSearchInterface(object):
         # scale
         self.sample_ax.set_xscale('log')
 
-        for sample_key,joint_sample in self.joint_samples.items():
-            # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label=sample_key)
-            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$\alpha_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=sample_key))
+        # plot
+        for joint_sample in self.joint_samples:
+            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$\alpha_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
         # legend
         self.sample_ax.legend(fontsize=self.fontsize*0.7)
 
@@ -318,7 +319,7 @@ class ExhaustiveSearchInterface(object):
         self.m_grid = np.zeros(self.x_grid.shape)
         self.design_tau_grid = np.zeros(self.x_grid.shape)
 
-        for joint_sample in self.joint_samples.values():
+        for joint_sample in self.joint_samples:
             joint_sample.data = np.empty_like(y_values)
 
         jia = self.jia
@@ -342,7 +343,7 @@ class ExhaustiveSearchInterface(object):
                 time.sleep(sleep_time)
 
             print y_value
-            for sample_str,joint_sample in self.joint_samples.items():
+            for joint_sample in self.joint_samples:
                 tau_vec = self.z_grid[j]
                 estimated_tau_vec = ( self.J_values*(joint_sample.motor_max_tq**2/joint_sample.Jm) )**0.5 # = ( Jk*(max_tq^2/Jm) )^0.5
                 idx = np.append(np.where( abs(tau_vec - estimated_tau_vec) < abs(tau_vec)*0.05 )[0],0).max()
@@ -426,13 +427,17 @@ if __name__ == '__main__':
 
     # sample joint
     esi5 = ExhaustiveSearchInterface()
-    esi5.joint_samples = {
-        'EC-4pole 200W 36V': JointSample(Jm=33.3*1e-7, motor_max_tq=0.104),
-        # 'EC-4pole 200W 36V(double)':JointSample(Jm=33.3*1e-7*2, motor_max_tq=0.104*2),
-        'EC-i 100W 36V': JointSample(Jm=44.0*1e-7, motor_max_tq=0.204),
-        'EC-max 60W 36V': JointSample(Jm=21.9*1e-7, motor_max_tq=0.0675),
-        'ILM70x10': JointSample(Jm=0.21*1e-4, motor_max_tq=0.74)
-        }
+    esi5.joint_samples = [
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104), # coef=0.00306
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g (experiment)', Jm=33.3*1e-7, motor_max_tq=0.0205*10),
+        # JointSample(motor_name='EC-4pole 30 200W 36V(double motor 600 g)', Jm=33.3*1e-7*2, motor_max_tq=0.104*2),
+        JointSample(motor_name='EC-i 40  50W 36V 180g', Jm=12.8*1e-7, motor_max_tq=0.0742), # coef=0.023
+        JointSample(motor_name='EC-i 40  70W 36V 250g', Jm=23.0*1e-7, motor_max_tq=0.126), # coef=0.0015
+        JointSample(motor_name='EC-i 40 100W 36V 390g', Jm=44.0*1e-7, motor_max_tq=0.204), # coef=0.001
+        JointSample(motor_name='EC-i 52 180W 36V 823g', Jm=170.0*1e-7, motor_max_tq=0.436), # coef=0.00089
+        # JointSample(motor_name='EC-max 30 60W 36V 305g', Jm=21.9*1e-7, motor_max_tq=0.0675), # coef=0.0048
+        # JointSample(motor_name='ILM70x10 230g', Jm=0.21*1e-4, motor_max_tq=0.74), coef=0.000038
+        ]
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
                    # ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
