@@ -347,7 +347,7 @@ class ExhaustiveSearchInterface(object):
                 tau_vec = self.z_grid[j]
                 estimated_tau_vec = ( self.J_values*(joint_sample.motor_max_tq**2/joint_sample.Jm) )**0.5 # = ( Jk*(max_tq^2/Jm) )^0.5
                 idx = np.append(np.where( abs(tau_vec - estimated_tau_vec) < abs(tau_vec)*0.05 )[0],0).max()
-                print sample_str+': '+str(idx)+' J:'+str(self.J_values[idx])
+                print joint_sample.motor_name+': '+str(idx)+' J:'+str(self.J_values[idx])
                 joint_sample.data[j] = tau_vec[idx]
 
             print ''
