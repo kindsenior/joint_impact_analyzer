@@ -113,9 +113,10 @@ class JointImpactAnalyzer(object):
 
     # def calc_ode(self):
     def calc_ode(self):
-        duration = 0.5
+        # duration = 0.5
         # frame_rate = 1000
-        frame_rate = 100000
+        duration = 2
+        frame_rate = 5000
         dt = 1.0/frame_rate
         self.t_vec = np.linspace(0,duration,duration*frame_rate)
         self.x_mat = odeint(self.state_equation_func, [0,0,0,-self.param.g*self.param.Tjump*0.5], self.t_vec)
