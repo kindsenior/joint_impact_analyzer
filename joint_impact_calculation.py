@@ -160,6 +160,9 @@ class ExhaustiveSearchInterface(object):
         self.cmap = 'hsv'
         self.color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
+        mpl.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+        mpl.rc('text', usetex=True)
+
         self.fontsize = 35
 
         self.lx_max = 1.0
