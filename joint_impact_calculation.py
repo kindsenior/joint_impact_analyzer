@@ -196,8 +196,9 @@ class ExhaustiveSearchInterface(object):
             # select tics position
             if hasattr(ax.axes,'zaxis'):
                 ax.axes.xaxis.tick_bottom()
-                ax.axes.yaxis.tick_top()
-                ax.axes.zaxis.tick_top()
+                ax.axes.yaxis.tick_bottom()
+                ax.axes.zaxis.tick_bottom()
+                ax.view_init(30,-35) # rotate view
 
     def plot_3d_map(self, value_list, num_tau=1, update=True, clear=True):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False, num_tau=num_tau)
@@ -208,7 +209,7 @@ class ExhaustiveSearchInterface(object):
         self.axes = [self.Lax, self.Rax]
         self.update_plot_conf(clear=clear)
         # figure
-        map((lambda ax: ax.figure.subplots_adjust(left=0.0,right=0.95, bottom=0.05,top=1, wspace=0.1, hspace=1)), self.axes)
+        map((lambda ax: ax.figure.subplots_adjust(left=-0.1,right=0.94, bottom=0.05,top=1, wspace=0.1, hspace=1)), self.axes)
         # label
         label_fontsize_rate = 0.9
         # self.Lax.set_xlabel(self.value_list[0][0],fontsize=self.fontsize*label_fontsize_rate)
@@ -290,8 +291,8 @@ class ExhaustiveSearchInterface(object):
         self.sample_ax.set_xlabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize)
         self.sample_ax.set_ylabel(r'$_{\mathrm{cont}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize)
         # margin
-        self.sample_ax.xaxis.labelpad=0
-        self.sample_ax.yaxis.labelpad=-10
+        self.sample_ax.xaxis.labelpad=-5
+        self.sample_ax.yaxis.labelpad=0
         # grid
         self.sample_ax.grid()
         # limit
@@ -300,10 +301,18 @@ class ExhaustiveSearchInterface(object):
         self.sample_ax.set_xscale('log')
 
         # plot
-        for joint_sample in self.joint_samples:
-            self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$\alpha_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
+        reference_idx = 8
+        reference_data_list = [sample.data[reference_idx] for sample in esi5.joint_samples]
+        sorted_data = np.sort(reference_data_list)[::-1].tolist()
+        for reference_data,joint_sample in zip(reference_data_list,self.joint_samples):
+            # self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
+            # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
+            bottom_idx = reference_data_list.index(sorted_data[(sorted_data.index(reference_data)+1)%len(reference_data_list)])
+            bottom_data = self.joint_samples[bottom_idx].data if bottom_idx != 0 else np.zeros_like(self.K_values)
+            self.sample_ax.fill_between(self.K_values, joint_sample.data, bottom_data, alpha=0.5, label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
+
         # legend
-        self.sample_ax.legend(fontsize=self.fontsize*0.7)
+        self.sample_ax.legend(fontsize=self.fontsize*0.7, loc='upper left')
 
         plt.pause(0.5)
 
@@ -311,7 +320,10 @@ class ExhaustiveSearchInterface(object):
         self.value_list = (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) if value_list is None else value_list
 
         for key_str,values in value_list:
-            setattr(self, key_str+'_values', values)
+            if type(values) == list:
+                setattr(self, key_str+'_values', np.array(values))
+            else:
+                setattr(self, key_str+'_values', values)
 
         x_key,x_values = self.value_list[0]
         y_key,y_values = self.value_list[1]
@@ -374,9 +386,10 @@ class ExhaustiveSearchInterface(object):
     #         print ''
 
 if __name__ == '__main__':
-    ext = '.svg'
+    # ext = '.svg'
+    ext = '.pdf'
 
-    format_str = '{motor_name}_Dj{Dj:.0f}'
+    format_str = '{motor_name}_Dj{Dj:.0f}_m{m:.0f}_Tjump{Tjump}_alpha{alpha}'
     # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,0.5**0.5, 5)**2, [0.7,0.85], np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
@@ -384,19 +397,21 @@ if __name__ == '__main__':
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(1.1**0.5,2**0.5, 5)**2, np.linspace(2.1**0.5,1000**0.5, 5)**2]),2)),
                    # ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
                    ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
+    rx_max = 1
     # EC-max
     esi0 = ExhaustiveSearchInterface()
     motor_name = 'EC-max'
-    esi0.jia.param.a, esi0.jia.param.b = 2.3e-4, 0.69
-    esi0.rx_max = 3
-    esi0.jia.param.Dl = 0.0
-    param_str = format_str.format(motor_name=motor_name, Dj=esi0.jia.param.Dl)
+    param = esi0.jia.param
+    param.a, param.b = 2.3e-4, 0.69
+    esi0.rx_max = rx_max
+    param.Dl = 0.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
     print param_str
     esi0.plot_3d_map( value_range )
     esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
-    esi0.jia.param.Dl = 20.0
-    param_str = format_str.format(motor_name=motor_name, Dj=esi0.jia.param.Dl)
+    param.Dl = 20.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
     print param_str
     esi0.plot_3d_map( value_range, clear=[False,True] )
     esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
@@ -404,34 +419,37 @@ if __name__ == '__main__':
     # EC-4pole
     esi1 = ExhaustiveSearchInterface()
     motor_name = 'EC-4pole'
-    esi1.jia.param.a, esi1.jia.param.b = 7.1e-5, 0.80
-    esi1.rx_max = 3
-    esi1.jia.param.Dl = 0.0
-    param_str = format_str.format(motor_name=motor_name, Dj=esi1.jia.param.Dl)
+    param = esi1.jia.param
+    param.a, param.b = 7.1e-5, 0.80
+    esi1.rx_max = rx_max
+    param.Dl = 0.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
     print param_str
     esi1.plot_3d_map( value_range )
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
-    esi1.jia.param.Dl = 20.0
-    param_str = format_str.format(motor_name=motor_name, Dj=esi1.jia.param.Dl)
+    param.Dl = 20.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
     print param_str
     esi1.plot_3d_map( value_range, clear=[False,True] )
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
-    esi1.Lax.figure.savefig('J-K-map_'+motor_name+ext)
+    param_str = str.replace('{motor_name}_m{m:.0f}_Tjump{Tjump}'.format(motor_name=motor_name, m=param.m, Tjump=param.Tjump), '.','-')
+    esi1.Lax.figure.savefig('J-K-map_'+param_str+ext)
 
     # EC-i
     esi2 = ExhaustiveSearchInterface()
     motor_name = 'EC-i'
-    esi2.jia.param.a, esi2.jia.param.b = 7.6e-5, 0.56
-    esi2.rx_max = 3
-    esi2.jia.param.Dl = 0.0
-    param_str = format_str.format(motor_name=motor_name, Dj=esi2.jia.param.Dl)
+    param = esi2.jia.param
+    param.a, param.b = 7.6e-5, 0.56
+    esi2.rx_max = rx_max
+    param.Dl = 0.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
     print param_str
     esi2.plot_3d_map( value_range )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
-    esi2.jia.param.Dl = 20.0
-    param_str = format_str.format(motor_name=motor_name, Dj=esi2.jia.param.Dl)
+    param.Dl = 20.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
     print param_str
     esi2.plot_3d_map( value_range, clear=[False,True] )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
@@ -452,24 +470,42 @@ if __name__ == '__main__':
     # esi4.plot_3d_map( value_range )
 
     # sample joint
-    over_current = 10.0
+    air_cooling_current = 10.0
+    # air_cooling_current = 30.0
+    water_cooling_current = 50.0
     esi5 = ExhaustiveSearchInterface()
+    param = esi5.jia.param
+    # param.design_torque_factor = 6.77 # knee joint 10A
+    # param.design_torque_factor = 1.35*2.5 # knee joint 10A
+    # param.design_torque_factor = 1.35 # knee joint 50A 700Nm/500Nm
+    param.design_torque_factor = 1.3
+    # param.design_torque_factor = 1
+    # param.Tjump = 0.3
+    param.Tjump = 0.4
     esi5.joint_samples = [
-        JointSample(motor_name='ILM70x10 230g', Jm=0.21*1e-4, motor_max_tq=0.74), # coef=0.000038
         JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104), # coef=0.00306
-        JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(over_current), Jm=33.3*1e-7, motor_max_tq=0.0205*over_current),
-        # JointSample(motor_name='EC-4pole 30 200W 36V(double motor 600 g)', Jm=33.3*1e-7*2, motor_max_tq=0.104*2),
+        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600 g', Jm=2*33.3*1e-7, motor_max_tq=2*0.104),
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(air_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*air_cooling_current),
+        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(air_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*air_cooling_current),
+        # JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(water_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*water_cooling_current),
+        JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(water_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*water_cooling_current),
         JointSample(motor_name='EC-i 40  50W 36V 180g', Jm=12.8*1e-7, motor_max_tq=0.0742), # coef=0.023
         JointSample(motor_name='EC-i 40  70W 36V 250g', Jm=23.0*1e-7, motor_max_tq=0.126), # coef=0.0015
-        JointSample(motor_name='EC-i 40 100W 36V 390g', Jm=44.0*1e-7, motor_max_tq=0.204), # coef=0.001
+        # JointSample(motor_name='EC-i 40 100W 36V 390g', Jm=44.0*1e-7, motor_max_tq=0.204), # coef=0.001x
         JointSample(motor_name='EC-i 52 180W 36V 823g', Jm=170.0*1e-7, motor_max_tq=0.436), # coef=0.00089
         # JointSample(motor_name='EC-max 30 60W 36V 305g', Jm=21.9*1e-7, motor_max_tq=0.0675), # coef=0.0048
+        JointSample(motor_name='ILM70x10 230g', Jm=0.21*1e-4, motor_max_tq=0.74), # coef=0.000038
         ]
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
-    value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
+    value_range = (('J', np.round(np.hstack([np.linspace(0.2,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
+    # value_range = (('J', np.round(np.hstack([np.linspace(0.001,3, 20), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
                    # ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
                    # ('K', [7,8,10,15,30,60,100,200,300,1000,2000,3000,6000,15000,25000]))
-                   ('K', [7,8,10,15,30,60,100,120,150,200,300,1000,2000,3000,6000,15000,25000]))
-    esi5.jia.param.Dl = 0
+                   # ('K', [7,8,10,15,30,60,100,120,150,200,300,1000,2000,3000,6000,15000,25000]))
+                   ('K', [10,20,50,100,200,300,500,700,1000,1200,1500,3000,10000,25000,30000]))
+    param.Dl = 0
     esi5.plot_sample_values(value_range)
-    esi5.sample_ax.figure.savefig('spesific-motor-joint-impact-map'+ext)
+    format_str = 'm{m:.0f}_Tjump{Tjump}_alpha{alpha}_Dj{Dj:.0f}'
+    param_str = str.replace(format_str.format(Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    esi5.sample_ax.figure.savefig('spesific-motor-joint-impact-map_'+param_str+ext)
