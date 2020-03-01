@@ -39,7 +39,7 @@ class JointParam(object):
         # self.a,self.b = 2.3e-4,0.7 # EC-max
         self.a,self.b = 7e-5,0.8 # EC-4pole
         # self.a,self.b = 0.3,2 # not negative
-        self.safety_factor = 1.0 # safety factor
+        self.design_torque_factor = 1.35 # max design torque / continuous joint torque
 
 class JointSample(object):
     def __init__(self, motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104):
@@ -247,9 +247,9 @@ class ExhaustiveSearchInterface(object):
                               # color=self.color_list[self.color_index_list[0]], linewidth=0.3, alpha=0.3, edgecolors='gray', shade=True)
                               color=self.color_list[self.color_index_list[0]], linewidth=1, alpha=0, edgecolors=self.color_list[self.color_index_list[0]])
         rx_max,rz_max = self.rx_max,self.rz_max
-        m_grid,design_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(self.design_tau_grid, 0,rz_max)
+        m_grid,cont_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(self.cont_tau_grid, 0,rz_max)
         # m_grid = np.log10(m_grid)
-        m,design_tau = m_grid.flatten(), design_tau_grid.flatten()
+        m,cont_tau = m_grid.flatten(), cont_tau_grid.flatten()
 
         # legend by dummy plot
         linestyle='-'; linewidth=2
@@ -264,14 +264,14 @@ class ExhaustiveSearchInterface(object):
         self.Lax.legend(tmp_fake_plot_list, tmp_text_list, numpoints=1, fontsize=self.fontsize*0.6)
 
         # M map
-        # p = self.Rax.scatter(m, y, design_tau, c=design_tau, cmap=self.cmap, alpha=0.7)
-        self.Rax.plot_surface(m_grid, y_grid, design_tau_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='gray')
+        # p = self.Rax.scatter(m, y, cont_tau, c=cont_tau, cmap=self.cmap, alpha=0.7)
+        self.Rax.plot_surface(m_grid, y_grid, cont_tau_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='gray')
 
         # # masked domain
         # # m_mask = self.m_3d_grid < 400
         # m_mask = self.m_3d_grid > 0
-        # m_3d,design_tau_3d,y_3d = self.m_3d_grid[m_mask].flatten(), self.design_tau_3d_grid[m_mask].flatten(), self.y_3d_grid[m_mask].flatten()
-        # p = self.Rax.scatter(m_3d,y_3d,design_tau_3d, c=design_tau_3d, cmap=self.cmap, alpha=0.7)
+        # m_3d,cont_tau_3d,y_3d = self.m_3d_grid[m_mask].flatten(), self.cont_tau_3d_grid[m_mask].flatten(), self.y_3d_grid[m_mask].flatten()
+        # p = self.Rax.scatter(m_3d,y_3d,cont_tau_3d, c=cont_tau_3d, cmap=self.cmap, alpha=0.7)
 
         plt.pause(0.5)
 
@@ -317,7 +317,7 @@ class ExhaustiveSearchInterface(object):
         self.x_grid,self.y_grid = np.meshgrid(x_values,y_values)
         self.z_grid = np.zeros(self.x_grid.shape)
         self.m_grid = np.zeros(self.x_grid.shape)
-        self.design_tau_grid = np.zeros(self.x_grid.shape)
+        self.cont_tau_grid = np.zeros(self.x_grid.shape)
 
         for joint_sample in self.joint_samples:
             joint_sample.data = np.empty_like(y_values)
@@ -332,23 +332,24 @@ class ExhaustiveSearchInterface(object):
 
                 self.z_grid[j][i] = impact_tau
 
-                design_tau = impact_tau*jia.param.safety_factor
-                self.m_grid[j][i] = ( jia.param.J/(jia.param.a*design_tau**2) )**(-1.0/jia.param.b)
-                self.design_tau_grid[j][i] = design_tau
+                cont_tau = impact_tau/jia.param.design_torque_factor
+                self.m_grid[j][i] = ( jia.param.J/(jia.param.a*cont_tau**2) )**(-1.0/jia.param.b)
+                self.cont_tau_grid[j][i] = cont_tau
 
                 J,K,Dl = jia.param.J,jia.param.K,jia.param.Dl
-                print (J,K,Dl), ' m:', self.m_grid[j][i], ' tau:', impact_tau
-                if plot_2d: self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl))
+                # print (J,K,Dl), ' m:', self.m_grid[j][i], ' tau:', impact_tau
+                if plot_2d: self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl)+'   max tau:'+str(np.round(impact_tau,1)))
 
                 time.sleep(sleep_time)
 
             print y_value
             for joint_sample in self.joint_samples:
-                tau_vec = self.z_grid[j]
-                estimated_tau_vec = ( self.J_values*(joint_sample.motor_max_tq**2/joint_sample.Jm) )**0.5 # = ( Jk*(max_tq^2/Jm) )^0.5
-                idx = np.append(np.where( abs(tau_vec - estimated_tau_vec) < abs(tau_vec)*0.05 )[0],0).max()
-                print joint_sample.motor_name+': '+str(idx)+' J:'+str(self.J_values[idx])
-                joint_sample.data[j] = tau_vec[idx]
+                impact_tau_vec = self.z_grid[j]
+                estimated_tau_vec = jia.param.design_torque_factor * ( self.J_values/joint_sample.Jtau_coeff() )**0.5 # = alpha * ( Jk*(max_tq^2/Jm) )^0.5
+                delta_vec = np.clip(abs(impact_tau_vec)*0.05, 6,np.inf)
+                idx = np.append(np.where( abs(impact_tau_vec - estimated_tau_vec) < delta_vec )[0],0).max()
+                print joint_sample.motor_name+': '+str(idx)+' J:'+str(self.J_values[idx])+' tq:'+str(np.round(impact_tau_vec[:idx+1],1))
+                joint_sample.data[j] = impact_tau_vec[idx]
 
             print ''
         print ''
