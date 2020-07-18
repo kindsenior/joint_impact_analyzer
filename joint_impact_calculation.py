@@ -307,7 +307,7 @@ class ExhaustiveSearchInterface(object):
 
         # plot
         reference_idx = 8
-        reference_data_list = [sample.data[reference_idx] for sample in esi5.joint_samples]
+        reference_data_list = [sample.data[reference_idx] for sample in self.joint_samples]
         sorted_data = np.sort(reference_data_list)[::-1].tolist()
         for reference_data,joint_sample in zip(reference_data_list,self.joint_samples):
             # self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
@@ -390,10 +390,7 @@ class ExhaustiveSearchInterface(object):
 
     #         print ''
 
-if __name__ == '__main__':
-    # ext = '.svg'
-    ext = '.pdf'
-
+def export_JKM_map(ext='pdf'):
     format_str = '{motor_name}_Dj{Dj:.0f}_m{m:.0f}_Tjump{Tjump}_alpha{alpha}'
     # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
@@ -459,21 +456,7 @@ if __name__ == '__main__':
     esi2.plot_3d_map( value_range, clear=[False,True] )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
-    # # damping
-    # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,0.5**0.5, 5)**2, [0.7,0.85], np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
-    #                ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
-    # esi3 = ExhaustiveSearchInterface()
-    # esi3.jia.param.a, esi3.jia.param.b = 7.1e-5, 0.80 # EC-4pole
-    # esi3.rx_max = 3
-    # esi3.jia.param.Dl = 10.0
-    # esi3.plot_3d_map( value_range )
-
-    # esi4 = ExhaustiveSearchInterface()
-    # esi4.jia.param.a, esi4.jia.param.b = 7.1e-5, 0.80 # EC-4pole
-    # esi4.rx_max = 3
-    # esi4.jia.param.Dl = 20.0
-    # esi4.plot_3d_map( value_range )
-
+def export_joint_sample_map(ext='pdf'):
     # sample joint
     air_cooling_current = 10.0
     # air_cooling_current = 30.0
@@ -514,3 +497,13 @@ if __name__ == '__main__':
     format_str = 'm{m:.0f}_Tjump{Tjump}_alpha{alpha}_Dj{Dj:.0f}'
     param_str = str.replace(format_str.format(Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
     esi5.sample_ax.figure.savefig('spesific-motor-joint-impact-map_'+param_str+ext)
+
+if __name__ == '__main__':
+    # ext = '.svg'
+    ext = '.pdf'
+
+    # logger.setLevel(CRITICAL)
+    # export_JKM_map(ext=ext)
+
+    logger.setLevel(INFO)
+    export_joint_sample_map(ext=ext)
