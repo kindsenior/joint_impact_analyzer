@@ -12,6 +12,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from scipy.integrate import odeint
 
+from logger import *
+
 def smooth_x(x):
     E = 1.8
     return np.power(np.abs(x),E)*np.sign(x)
@@ -353,22 +355,22 @@ class ExhaustiveSearchInterface(object):
                 self.cont_tau_grid[j][i] = cont_tau
 
                 J,K,Dl = jia.param.J,jia.param.K,jia.param.Dl
-                # print (J,K,Dl), ' m:', self.m_grid[j][i], ' tau:', impact_tau
+                # logger.info('({},{},{}) m: tau:'.format(J, K, Dl, self.m_grid[j][i], impact_tau))
                 if plot_2d: self.jia.plot_answer(title='J:'+str(J)+' K:'+str(K)+' Dl:'+str(Dl)+'   max tau:'+str(np.round(impact_tau,1)))
 
                 time.sleep(sleep_time)
 
-            print y_value
+            logger.info('y: {}'.format(y_value))
             for joint_sample in self.joint_samples:
                 impact_tau_vec = self.z_grid[j]
                 estimated_tau_vec = jia.param.design_torque_factor * ( self.J_values/joint_sample.Jtau_coeff() )**0.5 # = alpha * ( Jk*(max_tq^2/Jm) )^0.5
                 delta_vec = np.clip(abs(impact_tau_vec)*0.05, 6,np.inf)
                 idx = np.append(np.where( abs(impact_tau_vec - estimated_tau_vec) < delta_vec )[0],0).max()
-                print joint_sample.motor_name+': '+str(idx)+' J:'+str(self.J_values[idx])+' tq:'+str(np.round(impact_tau_vec[:idx+1],1))
+                logger.info('{}: {}'' J: {} tq: {}'.format(joint_sample.motor_name, idx, self.J_values[idx], np.round(impact_tau_vec[:idx+1],1)))
                 joint_sample.data[j] = impact_tau_vec[idx]
 
-            print ''
-        print ''
+            logger.info('')
+        logger.info('')
 
     # def sweep_variables_impl(self, value_list, sleep_time):
     #     if len(value_list) < 1:
@@ -409,13 +411,13 @@ if __name__ == '__main__':
     esi0.rx_max = rx_max
     param.Dl = 0.0
     param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
-    print param_str
+    logger.critical(param_str)
     esi0.plot_3d_map( value_range )
     esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     param.Dl = 20.0
     param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
-    print param_str
+    logger.critical(param_str)
     esi0.plot_3d_map( value_range, clear=[False,True] )
     esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
@@ -427,13 +429,13 @@ if __name__ == '__main__':
     esi1.rx_max = rx_max
     param.Dl = 0.0
     param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
-    print param_str
+    logger.critical(param_str)
     esi1.plot_3d_map( value_range )
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     param.Dl = 20.0
     param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
-    print param_str
+    logger.critical(param_str)
     esi1.plot_3d_map( value_range, clear=[False,True] )
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
     param_str = str.replace('{motor_name}_m{m:.0f}_Tjump{Tjump}'.format(motor_name=motor_name, m=param.m, Tjump=param.Tjump), '.','-')
@@ -447,13 +449,13 @@ if __name__ == '__main__':
     esi2.rx_max = rx_max
     param.Dl = 0.0
     param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
-    print param_str
+    logger.critical(param_str)
     esi2.plot_3d_map( value_range )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     param.Dl = 20.0
     param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
-    print param_str
+    logger.critical(param_str)
     esi2.plot_3d_map( value_range, clear=[False,True] )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
