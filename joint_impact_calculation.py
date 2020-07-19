@@ -282,7 +282,7 @@ class ExhaustiveSearchInterface(object):
 
         plt.pause(0.5)
 
-    def plot_sample_values(self, value_list, update=True):
+    def plot_sample_values(self, value_list, update=True, fname=None):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
 
         # axis
@@ -319,6 +319,9 @@ class ExhaustiveSearchInterface(object):
         self.sample_ax.legend(fontsize=self.fontsize*0.7, loc='upper left')
 
         plt.pause(0.5)
+
+        # save figure
+        if fname is not None: self.sample_ax.figure.savefig(fname)
 
     def sweep_variables(self, value_list=None, sleep_time=0.2, plot_2d=False, num_tau=1):
         self.value_list = (('K', [1000,2000,3000,6000,25000,47000,110000]), ('Dl', np.linspace(0,30, 10, dtype=int))) if value_list is None else value_list
@@ -460,49 +463,10 @@ def export_joint_sample_map(ext='.pdf'):
     air_cooling_current = 10.0
     # air_cooling_current = 30.0
     water_cooling_current = 50.0
-    esi5 = ExhaustiveSearchInterface()
-    param = esi5.jia.param
-    # param.design_torque_factor = 6.77 # knee joint 10A
-    # param.design_torque_factor = 1.35*2.5 # knee joint 10A
-    # param.design_torque_factor = 1.35 # knee joint 50A 700Nm/500Nm
-    param.design_torque_factor = 1.3
-    # param.design_torque_factor = 1
-    # param.Tjump = 0.3
-    param.Tjump = 0.4
-    ec4pole_samples = (
-        # JointSample(motor_name='EC-4pole 30 100W 36V 175g', Jm=8.91*1e-7, motor_max_tq=0.0564), # coef=0.00280
-        # JointSample(motor_name='EC-4pole 30 100W 36V 210g', Jm=18.3*1e-7, motor_max_tq=0.0780), # coef=0.00301
-        JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104), # coef=0.00306
-        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600 g', Jm=2*33.3*1e-7, motor_max_tq=2*0.104),
-        JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(air_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*air_cooling_current),
-        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(air_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*air_cooling_current),
-        # JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(water_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*water_cooling_current),
-        JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(water_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*water_cooling_current),
-    )
-    eci_samples = (
-        # JointSample(motor_name='EC-i 40  50W 36V 150g', Jm= 8.1*1e-7, motor_max_tq=0.0742), # coef=0.020
-        JointSample(motor_name='EC-i 40  50W 36V 180g', Jm=12.8*1e-7, motor_max_tq=0.0742), # coef=0.023
-        # JointSample(motor_name='EC-i 40  70W 36V 242g', Jm=15.5*1e-7, motor_max_tq=0.106), # coef=0.0014
-        JointSample(motor_name='EC-i 40  70W 36V 250g', Jm=23.0*1e-7, motor_max_tq=0.126), # coef=0.0015
-        # JointSample(motor_name='EC-i 40 100W 36V 390g', Jm=44.0*1e-7, motor_max_tq=0.204), # coef=0.0011
-        JointSample(motor_name='EC-i 52 180W 36V 823g', Jm=170.0*1e-7, motor_max_tq=0.436), # coef=0.00089
-    )
-    ecmax_samples = (
-        JointSample(motor_name='EC-max 30 60W 36V 305g', Jm=21.9*1e-7, motor_max_tq=0.0675), # coef=0.0048
-    )
-    ilm_samples = (
-        # JointSample(motor_name='ILM50x14 135g', Jm=0.086*1e-4, motor_max_tq=0.50), # coef=0.0000344
-        JointSample(motor_name='ILM70x10 230g', Jm= 0.21*1e-4, motor_max_tq=0.74), # coef=0.0000383
-        # JointSample(motor_name='ILM70x18 340g', Jm= 0.34*1e-4, motor_max_tq=1.25), # coef=0.0000218
-        # # JointSample(motor_name='ILM85x04 200g', Jm= 0.28*1e-4, motor_max_tq=0.43), # coef=0.000154
-        # JointSample(motor_name='ILM85x13 370g', Jm= 0.61*1e-4, motor_max_tq=1.43), # coef=0.0000298
-        # JointSample(motor_name='ILM85x23 550g', Jm= 0.98*1e-4, motor_max_tq=2.3 ), # coef=0.0000185
-        # JointSample(motor_name='ILM85x26 590g', Jm= 1.15*1e-4, motor_max_tq=2.6 ), # coef=0.0000170
-    )
-    # esi5.joint_samples = ec4pole_samples
-    # esi5.joint_samples = eci_samples
-    # esi5.joint_samples = ilm_samples
-    esi5.joint_samples = ec4pole_samples + eci_samples + ilm_samples
+
+    head_fname = 'spesific-motor-joint-impact-map'
+    param_format = '_m{m:.0f}_Tjump{Tjump}_alpha{alpha}_Dj{Dj:.0f}'
+
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.2,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
@@ -511,11 +475,56 @@ def export_joint_sample_map(ext='.pdf'):
                    # ('K', [7,8,10,15,30,60,100,200,300,1000,2000,3000,6000,15000,25000]))
                    # ('K', [7,8,10,15,30,60,100,120,150,200,300,1000,2000,3000,6000,15000,25000]))
                    ('K', [10,20,50,100,200,300,500,700,1000,1200,1500,3000,10000,25000,30000]))
+
+    esi5 = ExhaustiveSearchInterface()
+    param = esi5.jia.param
     param.Dl = 0
-    esi5.plot_sample_values(value_range)
-    format_str = 'm{m:.0f}_Tjump{Tjump}_alpha{alpha}_Dj{Dj:.0f}'
-    param_str = str.replace(format_str.format(Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
-    esi5.sample_ax.figure.savefig('spesific-motor-joint-impact-map_'+param_str+ext)
+    # param.design_torque_factor = 6.77 # knee joint 10A
+    # param.design_torque_factor = 1.35*2.5 # knee joint 10A
+    # param.design_torque_factor = 1.35 # knee joint 50A 700Nm/500Nm
+    param.design_torque_factor = 1.3
+    # param.design_torque_factor = 1
+    # param.Tjump = 0.3
+    param.Tjump = 0.4
+    param_str = str.replace(param_format.format(Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+
+    esi5.joint_samples = (
+        JointSample(motor_name='EC-4pole 30 100W 36V 175g', Jm=8.91*1e-7, motor_max_tq=0.0564), # coef=0.00280
+        JointSample(motor_name='EC-4pole 30 100W 36V 210g', Jm=18.3*1e-7, motor_max_tq=0.0780), # coef=0.00301
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104), # coef=0.00306
+        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600 g', Jm=2*33.3*1e-7, motor_max_tq=2*0.104),
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(air_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*air_cooling_current),
+        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(air_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*air_cooling_current),
+        # JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(water_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*water_cooling_current),
+        JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(water_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*water_cooling_current),
+    )
+    esi5.plot_sample_values(value_range, fname=head_fname+'_EC-4pole'+param_str+ext)
+
+    esi5.joint_samples = (
+        # JointSample(motor_name='EC-i 40  50W 36V 150g', Jm= 8.1*1e-7, motor_max_tq=0.0742), # coef=0.020
+        JointSample(motor_name='EC-i 40  50W 36V 180g', Jm=12.8*1e-7, motor_max_tq=0.0742), # coef=0.023
+        JointSample(motor_name='EC-i 40  70W 36V 242g', Jm=15.5*1e-7, motor_max_tq=0.106), # coef=0.0014
+        JointSample(motor_name='EC-i 40  70W 36V 250g', Jm=23.0*1e-7, motor_max_tq=0.126), # coef=0.0015
+        JointSample(motor_name='EC-i 40 100W 36V 390g', Jm=44.0*1e-7, motor_max_tq=0.204), # coef=0.0011
+        JointSample(motor_name='EC-i 52 180W 36V 823g', Jm=170.0*1e-7, motor_max_tq=0.436), # coef=0.00089
+    )
+    esi5.plot_sample_values(value_range, fname=head_fname+'_EC-i'+param_str+ext)
+
+    esi5.joint_samples = (
+        JointSample(motor_name='EC-max 30 60W 36V 305g', Jm=21.9*1e-7, motor_max_tq=0.0675), # coef=0.0048
+    )
+    esi5.plot_sample_values(value_range, fname=head_fname+'_EC-max'+param_str+ext)
+
+    esi5.joint_samples = (
+        # JointSample(motor_name='ILM50x14 135g', Jm=0.086*1e-4, motor_max_tq=0.50), # coef=0.0000344
+        JointSample(motor_name='ILM70x10 230g', Jm= 0.21*1e-4, motor_max_tq=0.74), # coef=0.0000383
+        JointSample(motor_name='ILM70x18 340g', Jm= 0.34*1e-4, motor_max_tq=1.25), # coef=0.0000218
+        # JointSample(motor_name='ILM85x04 200g', Jm= 0.28*1e-4, motor_max_tq=0.43), # coef=0.000154
+        JointSample(motor_name='ILM85x13 370g', Jm= 0.61*1e-4, motor_max_tq=1.43), # coef=0.0000298
+        JointSample(motor_name='ILM85x23 550g', Jm= 0.98*1e-4, motor_max_tq=2.3 ), # coef=0.0000185
+        JointSample(motor_name='ILM85x26 590g', Jm= 1.15*1e-4, motor_max_tq=2.6 ), # coef=0.0000170
+    )
+    esi5.plot_sample_values(value_range, fname=head_fname+'_ILM'+param_str+ext)
 
 if __name__ == '__main__':
     # ext = '.svg'
