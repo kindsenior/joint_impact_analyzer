@@ -306,14 +306,13 @@ class ExhaustiveSearchInterface(object):
         self.sample_ax.set_xscale('log')
 
         # plot
-        reference_idx = 8
-        reference_data_list = [sample.data[reference_idx] for sample in self.joint_samples]
+        reference_data_list = [np.sum(sample.data) for sample in self.joint_samples]
         sorted_data = np.sort(reference_data_list)[::-1].tolist()
         for reference_data,joint_sample in zip(reference_data_list,self.joint_samples):
             # self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
             # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
             bottom_idx = reference_data_list.index(sorted_data[(sorted_data.index(reference_data)+1)%len(reference_data_list)])
-            bottom_data = self.joint_samples[bottom_idx].data if bottom_idx != 0 else np.zeros_like(self.K_values)
+            bottom_data = self.joint_samples[bottom_idx].data if reference_data_list[bottom_idx] != sorted_data[0] else np.zeros_like(self.K_values)
             self.sample_ax.fill_between(self.K_values, joint_sample.data, bottom_data, alpha=0.5, label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
 
         # legend
