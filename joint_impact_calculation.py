@@ -389,7 +389,7 @@ class ExhaustiveSearchInterface(object):
 
     #         print ''
 
-def export_JKM_map(ext='pdf'):
+def export_JKM_map(ext='.pdf'):
     format_str = '{motor_name}_Dj{Dj:.0f}_m{m:.0f}_Tjump{Tjump}_alpha{alpha}'
     # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
@@ -455,7 +455,7 @@ def export_JKM_map(ext='pdf'):
     esi2.plot_3d_map( value_range, clear=[False,True] )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
-def export_joint_sample_map(ext='pdf'):
+def export_joint_sample_map(ext='.pdf'):
     # sample joint
     air_cooling_current = 10.0
     # air_cooling_current = 30.0
