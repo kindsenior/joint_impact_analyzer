@@ -242,12 +242,19 @@ class ExhaustiveSearchInterface(object):
         self.Rax.set_zlabel(r'$_{\mathrm{cnt}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
         x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.z_grid
+        cont_tau_grid = self.cont_tau_grid
 
         # log settings
         y_grid = np.log10(y_grid)
         max_exp = np.ceil(np.log10(np.max(self.y_grid[:,0])))
         self.Lax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
         self.Rax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
+
+        # use log scale in J map
+        z_grid = np.log10(z_grid)
+        max_exp = np.ceil(np.log10(np.max(self.z_grid)))
+        min_exp = -1.0
+        self.Lax.set_zticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(min_exp,max_exp, max_exp-min_exp+1)])
 
         x,y,z = x_grid.flatten(), y_grid.flatten(), z_grid.flatten()
 
@@ -265,8 +272,9 @@ class ExhaustiveSearchInterface(object):
                               z_grid[:,0:x_max_idx],
                               # color=self.color_list[self.color_index_list[0]], linewidth=0.3, alpha=0.3, edgecolors='gray', shade=True)
                               color=self.color_list[self.color_index_list[0]], linewidth=1, alpha=0, edgecolors=self.color_list[self.color_index_list[0]])
+
         rx_max,rz_max = self.rx_max,self.rz_max
-        m_grid,cont_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(self.cont_tau_grid, 0,rz_max)
+        m_grid,cont_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(cont_tau_grid, 0,rz_max)
         # m_grid = np.log10(m_grid)
         m,cont_tau = m_grid.flatten(), cont_tau_grid.flatten()
 
