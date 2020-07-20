@@ -179,9 +179,9 @@ class ExhaustiveSearchInterface(object):
 
         self.fontsize = 35
 
-        self.lx_max = 1.0
+        self.lx_max = 0.5
         self.rx_max = 500
-        self.rz_max = 1000
+        self.rz_max = 600
 
     def update_plot_conf(self, clear=True):
         # clear list
@@ -215,7 +215,7 @@ class ExhaustiveSearchInterface(object):
                 ax.axes.xaxis.tick_bottom()
                 ax.axes.yaxis.tick_bottom()
                 ax.axes.zaxis.tick_bottom()
-                ax.view_init(30,-35) # rotate view
+                ax.view_init(30,-55) # rotate view
 
     def plot_3d_map(self, value_list, num_tau=1, update=True, clear=True):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False, num_tau=num_tau)
@@ -313,7 +313,8 @@ class ExhaustiveSearchInterface(object):
         # grid
         self.sample_ax.grid()
         # limit
-        self.sample_ax.set_ylim(0,1000)
+        self.sample_ax.set_xlim(10,20000)
+        self.sample_ax.set_ylim(10,600)
         # scale
         self.sample_ax.set_xscale('log')
 
@@ -413,7 +414,7 @@ def export_JKM_map(ext='.pdf'):
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(1.1**0.5,2**0.5, 5)**2, np.linspace(2.1**0.5,1000**0.5, 5)**2]),2)),
                    # ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
                    ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
-    rx_max = 1
+    rx_max = 0.6
     # EC-max
     esi0 = ExhaustiveSearchInterface()
     motor_name = 'EC-max'
