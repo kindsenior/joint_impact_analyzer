@@ -132,7 +132,7 @@ class JointImpactAnalyzer(object):
     def calc_ode(self):
         # duration = 0.5
         # frame_rate = 1000
-        duration = 2
+        duration = 2.0
         frame_rate = 5000
         dt = 1.0/frame_rate
         self.t_vec = np.linspace(0,duration,duration*frame_rate)
@@ -262,6 +262,7 @@ class ExhaustiveSearchInterface(object):
 
         x,y,z = x_grid.flatten(), y_grid.flatten(), z_grid.flatten()
 
+        # J map
         lx_max = self.lx_max
         self.Lax.set_xlim3d(0,min(lx_max,np.max(x_grid)))
         # z_limited = np.where(x>lx_max, 0,z)
@@ -435,6 +436,7 @@ def export_JKM_map(ext='.pdf'):
     Dl = 0.07 # 292*240(gear ratio)*2e-20 from JAXON's fsharp
     F = 12.0 # 820*240(gear ratio)*2e-14 from JAXON's fsharp
     esi0.rx_max = rx_max
+
     param.Dl = 0.0
     param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
@@ -508,6 +510,7 @@ def export_joint_sample_map(ext='.pdf'):
     param.Dl = 0
     param_str = str.replace(param_format.format(**param.param_dict()), '.','-')
 
+    # EC-4pole
     esi5.joint_samples = (
         JointSample(motor_name='EC-4pole 30 100W 36V 175g', Jm=8.91*1e-7, motor_max_tq=0.0564), # coef=0.00280
         JointSample(motor_name='EC-4pole 30 100W 36V 210g', Jm=18.3*1e-7, motor_max_tq=0.0780), # coef=0.00301
@@ -520,6 +523,7 @@ def export_joint_sample_map(ext='.pdf'):
     )
     esi5.plot_sample_values(value_range, fname=head_fname+'_EC-4pole'+param_str+ext)
 
+    # EC-i
     esi5.joint_samples = (
         # JointSample(motor_name='EC-i 40  50W 36V 150g', Jm= 8.1*1e-7, motor_max_tq=0.0742), # coef=0.020
         JointSample(motor_name='EC-i 40  50W 36V 180g', Jm=12.8*1e-7, motor_max_tq=0.0742), # coef=0.023
@@ -530,11 +534,13 @@ def export_joint_sample_map(ext='.pdf'):
     )
     esi5.plot_sample_values(value_range, fname=head_fname+'_EC-i'+param_str+ext)
 
+    # EC-max
     esi5.joint_samples = (
         JointSample(motor_name='EC-max 30 60W 36V 305g', Jm=21.9*1e-7, motor_max_tq=0.0675), # coef=0.0048
     )
     esi5.plot_sample_values(value_range, fname=head_fname+'_EC-max'+param_str+ext)
 
+    # ILM
     esi5.joint_samples = (
         # JointSample(motor_name='ILM50x14 135g', Jm=0.086*1e-4, motor_max_tq=0.50), # coef=0.0000344
         JointSample(motor_name='ILM70x10 230g', Jm= 0.21*1e-4, motor_max_tq=0.74), # coef=0.0000383
