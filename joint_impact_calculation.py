@@ -536,7 +536,9 @@ def export_joint_sample_map(ext='.pdf'):
 
     # EC-max
     esi5.joint_samples = (
+        JointSample(motor_name='EC-max 30 60W 36V 195g', Jm=11.0*1e-7, motor_max_tq=0.0357), # coef=0.0086
         JointSample(motor_name='EC-max 30 60W 36V 305g', Jm=21.9*1e-7, motor_max_tq=0.0675), # coef=0.0048
+        JointSample(motor_name='EC-max 40 60W 36V 460g', Jm=51.2*1e-7, motor_max_tq=0.102), # coef=0.0049
     )
     esi5.plot_sample_values(value_range, fname=head_fname+'_EC-max'+param_str+ext)
 
