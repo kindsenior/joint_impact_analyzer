@@ -247,8 +247,9 @@ class ExhaustiveSearchInterface(object):
         # log settings
         y_grid = np.log10(y_grid)
         max_exp = np.ceil(np.log10(np.max(self.y_grid[:,0])))
-        self.Lax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
-        self.Rax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(1,max_exp, max_exp)])
+        min_exp = np.floor(np.log10(max(1,np.min(self.y_grid[:,0]))))
+        self.Lax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(min_exp,max_exp, max_exp-min_exp+1)])
+        self.Rax.set_yticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(min_exp,max_exp, max_exp-min_exp+1)])
 
         # use log scale in J map
         z_grid = np.log10(z_grid)
