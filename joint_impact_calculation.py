@@ -44,6 +44,16 @@ class JointParam(object):
         # self.a,self.b = 0.3,2 # not negative
         self.design_torque_factor = 1.35 # max design torque / continuous joint torque
 
+    def param_dict(self):
+        return {
+            'm':self.m,
+            'leg':self.l,
+            'Tjump':self.Tjump,
+            'Dj':self.Dl,
+            'Fj':self.F,
+            'alpha':self.design_torque_factor,
+        }
+
 class JointSample(object):
     def __init__(self, motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104):
         self.motor_name = motor_name
@@ -395,7 +405,7 @@ class ExhaustiveSearchInterface(object):
     #         print ''
 
 def export_JKM_map(ext='.pdf'):
-    format_str = '{motor_name}_Dj{Dj:.0f}_m{m:.0f}_Tjump{Tjump}_alpha{alpha}'
+    format_str = '{motor_name}_m{m:.0f}_l{leg:.2g}_Dj{Dj:g}_Fj{Fj:g}_Tjump{Tjump}_alpha{alpha}'
     # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
     value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,0.5**0.5, 5)**2, [0.7,0.85], np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
@@ -413,13 +423,13 @@ def export_JKM_map(ext='.pdf'):
     F = 12.0 # 820*240(gear ratio)*2e-14 from JAXON's fsharp
     esi0.rx_max = rx_max
     param.Dl = 0.0
-    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
     esi0.plot_3d_map( value_range )
     esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     param.Dl = Dl; param.F = F
-    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
     esi0.plot_3d_map( value_range, clear=[False,True] )
     esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
@@ -431,17 +441,17 @@ def export_JKM_map(ext='.pdf'):
     param.a, param.b = 7.1e-5, 0.80
     esi1.rx_max = rx_max
     param.Dl = 0.0
-    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
     esi1.plot_3d_map( value_range )
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     param.Dl = Dl; param.F = F
-    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
     esi1.plot_3d_map( value_range, clear=[False,True] )
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
-    param_str = str.replace('{motor_name}_m{m:.0f}_Tjump{Tjump}'.format(motor_name=motor_name, m=param.m, Tjump=param.Tjump), '.','-')
+    param_str = str.replace('{motor_name}_m{m:.0f}_Tjump{Tjump}'.format(motor_name=motor_name, **param.param_dict()), '.','-')
     esi1.Lax.figure.savefig('J-K-map_'+param_str+ext)
 
     # EC-i
@@ -451,13 +461,13 @@ def export_JKM_map(ext='.pdf'):
     param.a, param.b = 7.6e-5, 0.56
     esi2.rx_max = rx_max
     param.Dl = 0.0
-    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
     esi2.plot_3d_map( value_range )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
     param.Dl = Dl; param.F = F
-    param_str = str.replace(format_str.format(motor_name=motor_name, Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
     esi2.plot_3d_map( value_range, clear=[False,True] )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
@@ -469,7 +479,7 @@ def export_joint_sample_map(ext='.pdf'):
     water_cooling_current = 50.0
 
     head_fname = 'spesific-motor-joint-impact-map'
-    param_format = '_m{m:.0f}_Tjump{Tjump}_alpha{alpha}_Dj{Dj:.0f}'
+    param_format = '_m{m:.0f}_l{leg:.2g}_Tjump{Tjump}_alpha{alpha}_Dj{Dj:.0f}_Fj{Fj:.0f}'
 
     # value_range = (('J', np.round(np.hstack([np.linspace(0.01**0.5,5**0.5, 10)**2, np.linspace(6**0.5,10**0.5, 10)**2, np.linspace(10**0.5,1000**0.5, 5)**2]),2)),
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05,3, 10), np.linspace(3.5**0.5,30**0.5, 10)**2, np.linspace(35**0.5,100**0.5, 10)**2, np.linspace(110**0.5,1000**0.5, 20)**2]),3)),
@@ -490,7 +500,7 @@ def export_joint_sample_map(ext='.pdf'):
     # param.design_torque_factor = 1
     # param.Tjump = 0.3
     param.Tjump = 0.4
-    param_str = str.replace(param_format.format(Dj=param.Dl, m=param.m, Tjump=param.Tjump, alpha=param.design_torque_factor), '.','-')
+    param_str = str.replace(param_format.format(**param.param_dict()), '.','-')
 
     esi5.joint_samples = (
         JointSample(motor_name='EC-4pole 30 100W 36V 175g', Jm=8.91*1e-7, motor_max_tq=0.0564), # coef=0.00280
