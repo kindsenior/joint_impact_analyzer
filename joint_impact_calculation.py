@@ -33,7 +33,9 @@ class JointParam(object):
         self.P = 0.0
         self.D = 0.0
 
-        self.Tjump = 0.3
+        # self.Tjump = 0.3
+        # self.Tjump = 0.4
+        self.Tjump = 0.5
         self.g = 9.8
         self.l = 0.4/sqrt(2)
         self.m = 70.0*0.5 # for double support phase
@@ -42,7 +44,8 @@ class JointParam(object):
         # self.a,self.b = 2.3e-4,0.7 # EC-max
         self.a,self.b = 7e-5,0.8 # EC-4pole
         # self.a,self.b = 0.3,2 # not negative
-        self.design_torque_factor = 1.35 # max design torque / continuous joint torque
+        # self.design_torque_factor = 1.35 # max design torque / continuous joint torque
+        self.design_torque_factor = 1.5 # max design torque / continuous joint torque (updated knee)
 
     def param_dict(self):
         return {
@@ -418,7 +421,7 @@ def export_JKM_map(ext='.pdf'):
     format_str = '{motor_name}_m{m:.0f}_l{leg:.2g}_Dj{Dj:g}_Fj{Fj:g}_Tjump{Tjump}_alpha{alpha}'
     # value_range = (('J', np.round(np.linspace(0.1,1, 20),3)), ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(2**0.5,1000**0.5, 10)**2]),2)),
-    value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,0.5**0.5, 5)**2, [0.7,0.85], np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
+    value_range = (('J', np.round(np.hstack([np.linspace(0.005**0.5,0.5**0.5, 10)**2, [0.7,0.85], np.linspace(1**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),3)),
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 5)**2, np.linspace(2**0.5,50**0.5, 10)**2, np.linspace(60**0.5,1000**0.5, 5)**2]),2)),
     # value_range = (('J', np.round(np.hstack([np.linspace(0.05**0.5,1**0.5, 10)**2, np.linspace(1.1**0.5,2**0.5, 5)**2, np.linspace(2.1**0.5,1000**0.5, 5)**2]),2)),
                    # ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
@@ -503,13 +506,6 @@ def export_joint_sample_map(ext='.pdf'):
     esi5 = ExhaustiveSearchInterface()
     param = esi5.jia.param
     param.Dl = 0
-    # param.design_torque_factor = 6.77 # knee joint 10A
-    # param.design_torque_factor = 1.35*2.5 # knee joint 10A
-    # param.design_torque_factor = 1.35 # knee joint 50A 700Nm/500Nm
-    param.design_torque_factor = 1.3
-    # param.design_torque_factor = 1
-    # param.Tjump = 0.3
-    param.Tjump = 0.4
     param_str = str.replace(param_format.format(**param.param_dict()), '.','-')
 
     esi5.joint_samples = (
