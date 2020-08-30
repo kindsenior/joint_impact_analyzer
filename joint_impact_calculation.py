@@ -184,7 +184,7 @@ class ExhaustiveSearchInterface(object):
 
         self.lx_max = 0.5
         self.rx_max = 500
-        self.rz_max = 600
+        self.rz_max = 800
 
     def update_plot_conf(self, clear=True):
         # clear list
@@ -242,10 +242,11 @@ class ExhaustiveSearchInterface(object):
         # self.Rax.set_ylabel(self.value_list[1][0],fontsize=self.fontsize*label_fontsize_rate)
         self.Rax.set_xlabel('$M_\mathrm{mot}$ [kg]',fontsize=self.fontsize*label_fontsize_rate)
         self.Rax.set_ylabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize*label_fontsize_rate)
-        self.Rax.set_zlabel(r'$_{\mathrm{cnt}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+        self.Rax.set_zlabel(r'$_{\mathrm{dsn}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
 
-        x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.z_grid
-        cont_tau_grid = self.cont_tau_grid
+        x_grid,y_grid,z_grid = self.x_grid, self.y_grid, self.impact_tau_grid
+        # rz_grid = self.cont_tau_grid
+        rz_grid = self.impact_tau_grid
 
         # log settings
         y_grid = np.log10(y_grid)
@@ -256,7 +257,7 @@ class ExhaustiveSearchInterface(object):
 
         # use log scale in J map
         z_grid = np.log10(z_grid)
-        max_exp = np.ceil(np.log10(np.max(self.z_grid)))
+        max_exp = np.ceil(np.log10(np.max(self.impact_tau_grid)))
         min_exp = -1.0
         self.Lax.set_zticklabels(['    $10^{'+'{0:.1f}'.format(val)+'}$' for val in np.linspace(min_exp,max_exp, max_exp-min_exp+1)])
 
@@ -279,9 +280,9 @@ class ExhaustiveSearchInterface(object):
                               color=self.color_list[self.color_index_list[0]], linewidth=1, alpha=0, edgecolors=self.color_list[self.color_index_list[0]])
 
         rx_max,rz_max = self.rx_max,self.rz_max
-        m_grid,cont_tau_grid = np.clip(self.m_grid, 0,rx_max), np.clip(cont_tau_grid, 0,rz_max)
+        m_grid,rz_grid = np.clip(self.m_grid, 0,rx_max), np.clip(rz_grid, 0,rz_max)
         # m_grid = np.log10(m_grid)
-        m,cont_tau = m_grid.flatten(), cont_tau_grid.flatten()
+        m,rz = m_grid.flatten(), rz_grid.flatten()
 
         # legend by dummy plot
         linestyle='-'; linewidth=2
@@ -296,8 +297,8 @@ class ExhaustiveSearchInterface(object):
         self.Lax.legend(tmp_fake_plot_list, tmp_text_list, numpoints=1, fontsize=self.fontsize*0.6)
 
         # M map
-        # p = self.Rax.scatter(m, y, cont_tau, c=cont_tau, cmap=self.cmap, alpha=0.7)
-        self.Rax.plot_surface(m_grid, y_grid, cont_tau_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='gray')
+        # p = self.Rax.scatter(m, y, rz, c=rz, cmap=self.cmap, alpha=0.7)
+        self.Rax.plot_surface(m_grid, y_grid, rz_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='gray')
 
         # # masked domain
         # # m_mask = self.m_3d_grid < 400
@@ -361,7 +362,7 @@ class ExhaustiveSearchInterface(object):
         x_key,x_values = self.value_list[0]
         y_key,y_values = self.value_list[1]
         self.x_grid,self.y_grid = np.meshgrid(x_values,y_values)
-        self.z_grid = np.zeros(self.x_grid.shape)
+        self.impact_tau_grid = np.zeros(self.x_grid.shape)
         self.m_grid = np.zeros(self.x_grid.shape)
         self.cont_tau_grid = np.zeros(self.x_grid.shape)
 
@@ -376,7 +377,7 @@ class ExhaustiveSearchInterface(object):
                 jia.calc_variables()
                 impact_tau = np.max(jia.tau_vec)
 
-                self.z_grid[j][i] = impact_tau
+                self.impact_tau_grid[j][i] = impact_tau
 
                 cont_tau = impact_tau/jia.param.design_torque_factor
                 self.m_grid[j][i] = ( jia.param.J/(jia.param.a*cont_tau**2) )**(-1.0/jia.param.b)
@@ -390,7 +391,7 @@ class ExhaustiveSearchInterface(object):
 
             logger.info('y: {}'.format(y_value))
             for joint_sample in self.joint_samples:
-                impact_tau_vec = self.z_grid[j]
+                impact_tau_vec = self.impact_tau_grid[j]
                 estimated_tau_vec = jia.param.design_torque_factor * ( self.J_values/joint_sample.Jtau_coeff() )**0.5 # = alpha * ( Jk*(max_tq^2/Jm) )^0.5
                 delta_vec = np.clip(abs(impact_tau_vec)*0.05, 6,np.inf)
                 idx = np.append(np.where( abs(impact_tau_vec - estimated_tau_vec) < delta_vec )[0],0).max()
