@@ -300,12 +300,6 @@ class ExhaustiveSearchInterface(object):
         # p = self.Rax.scatter(m, y, rz, c=rz, cmap=self.cmap, alpha=0.7)
         self.Rax.plot_surface(m_grid, y_grid, rz_grid, cmap=self.cmap, linewidth=0.3, alpha=0.3, edgecolors='gray')
 
-        # # masked domain
-        # # m_mask = self.m_3d_grid < 400
-        # m_mask = self.m_3d_grid > 0
-        # m_3d,cont_tau_3d,y_3d = self.m_3d_grid[m_mask].flatten(), self.cont_tau_3d_grid[m_mask].flatten(), self.y_3d_grid[m_mask].flatten()
-        # p = self.Rax.scatter(m_3d,y_3d,cont_tau_3d, c=cont_tau_3d, cmap=self.cmap, alpha=0.7)
-
         plt.pause(0.5)
 
     def plot_sample_values(self, value_list, update=True, fname=None):
