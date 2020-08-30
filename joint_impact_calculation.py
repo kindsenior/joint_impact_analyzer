@@ -312,7 +312,7 @@ class ExhaustiveSearchInterface(object):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
 
         # axis
-        if not hasattr(self, 'sample_fig'): self.sample_ax = plt.figure(figsize=(16,8)).gca()
+        if not hasattr(self, 'sample_fig'): self.sample_ax = plt.figure(figsize=(18,6)).gca()
         self.axes = [self.sample_ax]
         self.update_plot_conf()
         # figure
@@ -320,7 +320,7 @@ class ExhaustiveSearchInterface(object):
         # label
         # self.sample_ax.set_xlabel(self.value_list[1][0],fontsize=self.fontsize)
         self.sample_ax.set_xlabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize)
-        self.sample_ax.set_ylabel(r'$_{\mathrm{cont}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize)
+        self.sample_ax.set_ylabel(r'$_{\mathrm{dsn}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize)
         # margin
         self.sample_ax.xaxis.labelpad=-5
         self.sample_ax.yaxis.labelpad=0
@@ -328,7 +328,7 @@ class ExhaustiveSearchInterface(object):
         self.sample_ax.grid()
         # limit
         self.sample_ax.set_xlim(10,20000)
-        self.sample_ax.set_ylim(10,600)
+        self.sample_ax.set_ylim(10,800)
         # scale
         self.sample_ax.set_xscale('log')
 
@@ -336,11 +336,11 @@ class ExhaustiveSearchInterface(object):
         reference_data_list = [np.sum(sample.data) for sample in self.joint_samples]
         sorted_data = np.sort(reference_data_list)[::-1].tolist()
         for reference_data,joint_sample in zip(reference_data_list,self.joint_samples):
-            # self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
-            # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
+            # self.sample_ax.plot(self.K_values, joint_sample.data, '-', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{\mathrm{IT}^2}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
+            # self.sample_ax.plot(self.K_values, joint_sample.data, '-o', label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{\mathrm{IT}^2}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
             bottom_idx = reference_data_list.index(sorted_data[(sorted_data.index(reference_data)+1)%len(reference_data_list)])
             bottom_data = self.joint_samples[bottom_idx].data if reference_data_list[bottom_idx] != sorted_data[0] else np.zeros_like(self.K_values)
-            self.sample_ax.fill_between(self.K_values, joint_sample.data, bottom_data, alpha=0.5, label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{J-\tau}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
+            self.sample_ax.fill_between(self.K_values, joint_sample.data, bottom_data, alpha=0.5, label='{coef_name}={coef:.2e} ({motor})'.format(coef_name=r'$C_{\mathrm{IT}^2}$', coef=joint_sample.Jtau_coeff(), motor=joint_sample.motor_name))
 
         # legend
         self.sample_ax.legend(fontsize=self.fontsize*0.7, loc='upper left')
@@ -504,7 +504,7 @@ def export_joint_sample_map(ext='.pdf'):
                    # ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
                    # ('K', [7,8,10,15,30,60,100,200,300,1000,2000,3000,6000,15000,25000]))
                    # ('K', [7,8,10,15,30,60,100,120,150,200,300,1000,2000,3000,6000,15000,25000]))
-                   ('K', [10,20,50,100,200,300,500,700,1000,1200,1500,3000,10000,25000,30000]))
+                   ('K', [10,20,50,100,200,300,500,700,1000,2000,11000,25000,30000]))
 
     esi5 = ExhaustiveSearchInterface()
     param = esi5.jia.param
@@ -517,10 +517,10 @@ def export_joint_sample_map(ext='.pdf'):
         JointSample(motor_name='EC-4pole 30 100W 36V 210g', Jm=18.3*1e-7, motor_max_tq=0.0780), # coef=0.00301
         JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104), # coef=0.00306
         # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600 g', Jm=2*33.3*1e-7, motor_max_tq=2*0.104),
-        JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(air_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*air_cooling_current),
-        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(air_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*air_cooling_current),
-        # JointSample(motor_name='EC-4pole 30 200W 36V 300g ({0:.0f}A)'.format(water_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*water_cooling_current),
-        JointSample(motor_name='EC-4pole 30 200W 36V double motor 600g ({0:.0f}A)'.format(water_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*water_cooling_current),
+        # JointSample(motor_name='EC-4pole 30 200W 36V ({0:.0f}A) 300g'.format(air_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*air_cooling_current),
+        # JointSample(motor_name='EC-4pole 30 200W 36V ({0:.0f}A) 300g x 2'.format(air_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*air_cooling_current),
+        JointSample(motor_name='EC-4pole 30 200W 36V ({0:.0f}A) 300g'.format(water_cooling_current), Jm=33.3*1e-7, motor_max_tq=0.0205*water_cooling_current),
+        JointSample(motor_name='EC-4pole 30 200W 36V ({0:.0f}A) 300g x 2'.format(water_cooling_current), Jm=2*33.3*1e-7, motor_max_tq=2*0.0205*water_cooling_current),
     )
     esi5.plot_sample_values(value_range, fname=head_fname+'_EC-4pole'+param_str+ext)
 
