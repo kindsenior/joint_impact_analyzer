@@ -429,13 +429,14 @@ def export_JKM_map(ext='.pdf'):
                    # ('K', [1000,2000,3000,6000,15000,25000,35000,47000]))
                    ('K', [1,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
     rx_max = 0.6
-    # EC-max
-    esi0 = ExhaustiveSearchInterface()
-    motor_name = 'EC-max'
-    param = esi0.jia.param
-    param.a, param.b = 2.3e-4, 0.69
     Dl = 0.07 # 292*240(gear ratio)*2e-20 from JAXON's fsharp
     F = 12.0 # 820*240(gear ratio)*2e-14 from JAXON's fsharp
+
+    # EC
+    esi0 = ExhaustiveSearchInterface()
+    motor_name = 'EC'
+    param = esi0.jia.param
+    param.a, param.b = 2.2e-4, 0.91
     esi0.rx_max = rx_max
 
     param.Dl = 0.0
@@ -450,12 +451,13 @@ def export_JKM_map(ext='.pdf'):
     esi0.plot_3d_map( value_range, clear=[False,True] )
     esi0.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
-    # EC-4pole
+    # EC-max
     esi1 = ExhaustiveSearchInterface()
-    motor_name = 'EC-4pole'
+    motor_name = 'EC-max'
     param = esi1.jia.param
-    param.a, param.b = 7.1e-5, 0.80
+    param.a, param.b = 2.3e-4, 0.69
     esi1.rx_max = rx_max
+
     param.Dl = 0.0
     param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
     logger.critical(param_str)
@@ -467,14 +469,12 @@ def export_JKM_map(ext='.pdf'):
     logger.critical(param_str)
     esi1.plot_3d_map( value_range, clear=[False,True] )
     esi1.Rax.figure.savefig('M-K-map_'+param_str+ext)
-    param_str = str.replace('{motor_name}_m{m:.0f}_Tjump{Tjump}'.format(motor_name=motor_name, **param.param_dict()), '.','-')
-    esi1.Lax.figure.savefig('J-K-map_'+param_str+ext)
 
-    # EC-i
+    # EC-4pole
     esi2 = ExhaustiveSearchInterface()
-    motor_name = 'EC-i'
+    motor_name = 'EC-4pole'
     param = esi2.jia.param
-    param.a, param.b = 7.6e-5, 0.56
+    param.a, param.b = 7.1e-5, 0.80
     esi2.rx_max = rx_max
     param.Dl = 0.0
     param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
@@ -487,6 +487,44 @@ def export_JKM_map(ext='.pdf'):
     logger.critical(param_str)
     esi2.plot_3d_map( value_range, clear=[False,True] )
     esi2.Rax.figure.savefig('M-K-map_'+param_str+ext)
+    param_str = str.replace('{motor_name}_m{m:.0f}_Tjump{Tjump}'.format(motor_name=motor_name, **param.param_dict()), '.','-')
+    esi2.Lax.figure.savefig('J-K-map_'+param_str+ext)
+
+    # EC-i
+    esi3 = ExhaustiveSearchInterface()
+    motor_name = 'EC-i'
+    param = esi3.jia.param
+    param.a, param.b = 7.6e-5, 0.56
+    esi3.rx_max = rx_max
+    param.Dl = 0.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
+    logger.critical(param_str)
+    esi3.plot_3d_map( value_range )
+    esi3.Rax.figure.savefig('M-K-map_'+param_str+ext)
+
+    param.Dl = Dl; param.F = F
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
+    logger.critical(param_str)
+    esi3.plot_3d_map( value_range, clear=[False,True] )
+    esi3.Rax.figure.savefig('M-K-map_'+param_str+ext)
+
+    # ILM
+    esi4 = ExhaustiveSearchInterface()
+    motor_name = 'ILM'
+    param = esi4.jia.param
+    param.a, param.b = 1.3e-5, 0.71
+    esi4.rx_max = rx_max
+    param.Dl = 0.0
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
+    logger.critical(param_str)
+    esi4.plot_3d_map( value_range )
+    esi4.Rax.figure.savefig('M-K-map_'+param_str+ext)
+
+    param.Dl = Dl; param.F = F
+    param_str = str.replace(format_str.format(motor_name=motor_name, **param.param_dict()), '.','-')
+    logger.critical(param_str)
+    esi4.plot_3d_map( value_range, clear=[False,True] )
+    esi4.Rax.figure.savefig('M-K-map_'+param_str+ext)
 
 def export_joint_sample_map(ext='.pdf'):
     # sample joint
