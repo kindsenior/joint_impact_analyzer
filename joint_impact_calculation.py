@@ -58,14 +58,18 @@ class JointParam(object):
         }
 
 class JointSample(object):
-    def __init__(self, motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104):
+    def __init__(self, motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104, gear_ratio=229):
         self.motor_name = motor_name
         self.Jm = Jm
         self.motor_max_tq = motor_max_tq
+        self.gear_ratio = gear_ratio
         self.data = None
 
     def Jtau_coeff(self):
         return self.Jm/self.motor_max_tq**2
+
+    def Jjoint(self):
+        return self.Jm*(self.gear_ratio**2)
 
 class JointImpactAnalyzer(object):
     def __init__(self):
