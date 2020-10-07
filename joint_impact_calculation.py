@@ -306,6 +306,43 @@ class ExhaustiveSearchInterface(object):
 
         plt.pause(0.5)
 
+    def plot_motor_map(self, value_list, update=True, fname=None):
+        if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
+
+        # axis
+        if not hasattr(self,'motor_ax'): self.motor_ax = plt.figure(figsize=(18,6)).gca()
+        self.axes = [self.motor_ax]
+        self.update_plot_conf()
+        # figure
+        self.motor_ax.figure.subplots_adjust(left=0.1,right=0.98, bottom=0.13,top=0.95, wspace=0.1, hspace=1)
+        # label
+        label_fontsize_rate = 0.9
+        self.motor_ax.set_xlabel('$'+self.value_list[1][0]+'_\mathrm{jnt}$ [Nm/rad]',fontsize=self.fontsize*label_fontsize_rate)
+        self.motor_ax.set_ylabel(r'$_{\mathrm{max}}\tau_{\mathrm{jnt}}$ [Nm]',fontsize=self.fontsize*label_fontsize_rate)
+
+        # margin
+        self.motor_ax.xaxis.labelpad=-5
+        self.motor_ax.yaxis.labelpad=0
+        # grid
+        self.motor_ax.grid()
+        # limit
+        # self.motor_ax.set_xlim(10,2000a0)
+        # self.motor_ax.set_ylim(10,800)
+        # scale
+        self.motor_ax.set_xscale('log')
+
+        # plot
+        for sample_idx, sample in enumerate(self.joint_samples):
+            # self.motor_ax.plot(self.K_values, self.impact_tau_grid[:,sample_idx], '-o', label='{}(J={}) {}:1'.format(sample.motor_name, sample.Jm, sample.gear_ratio))
+            self.motor_ax.plot(self.K_values, self.impact_tau_grid[:,sample_idx], '-', label='{}(J={}) {}:1'.format(sample.motor_name, sample.Jm, sample.gear_ratio))
+
+        # legend
+        self.motor_ax.legend(fontsize=self.fontsize*0.7, loc='upper left')
+
+        if fname is not None: self.motor_ax.figure.savefig(fname)
+
+        plt.pause(0.5)
+
     def plot_sample_values(self, value_list, update=True, fname=None):
         if update: self.sweep_variables(value_list=value_list, sleep_time=0, plot_2d=False)
 
@@ -591,6 +628,36 @@ def export_joint_sample_map(ext='.pdf'):
     )
     esi5.plot_sample_values(value_range, fname=head_fname+'_ILM'+param_str+ext)
 
+def export_K_map(ext='.pdf'):
+    head_fname = 'spesific-motor-gear-joint-impact-map'
+    format_str = 'm{m:.0f}_l{leg:.2g}_Dj{Dj:g}_Fj{Fj:g}_Tjump{Tjump}_alpha{alpha}'
+    joint_samples = (
+        # JointSample(motor_name='EC-4pole 30 100W 36V 175g', Jm=8.91*1e-7, motor_max_tq=0.0564, gear_ratio=229),
+        # JointSample(motor_name='EC-4pole 30 100W 36V 210g', Jm=18.3*1e-7, motor_max_tq=0.0780, gear_ratio=229),
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104, gear_ratio=229),
+        # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600 g', Jm=2*33.3*1e-7, motor_max_tq=2*0.104, gear_ratio=229),
+    )
+
+    value_range = (('J', [joint_sample.Jjoint() for joint_sample in joint_samples]),
+                   ('K', [1.0,10,100,500,1000,2000,3000,6000,15000,25000,35000,47000]))
+
+    Dl = 0.07 # 292*240(gear ratio)*2e-20 from JAXON's fsharp
+    F = 12.0 # 820*240(gear ratio)*2e-14 from JAXON's fsharp
+
+    global esi
+    esi = ExhaustiveSearchInterface()
+    esi.joint_samples = joint_samples
+    param = esi.jia.param
+    param.Dl = 0.0
+    param_str = str.replace(format_str.format(**param.param_dict()), '.','-')
+    logger.critical(param_str)
+    esi.plot_motor_map( value_range, fname=head_fname+param_str+ext)
+
+    param.Dl = Dl; param.F = F
+    # param_str = str.replace(format_str.format(**param.param_dict()), '.','-')
+    # logger.critical(param_str)
+    # esi.plot_motor_map( value_range, fname=head_fname+param_str+ext)
+
 if __name__ == '__main__':
     # ext = '.svg'
     ext = '.pdf'
@@ -600,3 +667,5 @@ if __name__ == '__main__':
 
     logger.setLevel(INFO)
     export_joint_sample_map(ext=ext)
+
+    export_K_map()
