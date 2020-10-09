@@ -334,7 +334,7 @@ class ExhaustiveSearchInterface(object):
         # plot
         for sample_idx, sample in enumerate(self.joint_samples):
             # self.motor_ax.plot(self.K_values, self.impact_tau_grid[:,sample_idx], '-o', label='{}(J={}) {}:1'.format(sample.motor_name, sample.Jm, sample.gear_ratio))
-            self.motor_ax.plot(self.K_values, self.impact_tau_grid[:,sample_idx], '-', label='{}(J={}) {}:1'.format(sample.motor_name, sample.Jm, sample.gear_ratio))
+            self.motor_ax.plot(self.K_values, self.impact_tau_grid[:,sample_idx], '-', label='{}(J={}) {:.1f}:1'.format(sample.motor_name, sample.Jm, sample.gear_ratio))
 
         # legend
         self.motor_ax.legend(fontsize=self.fontsize*0.7, loc='upper left')
@@ -630,7 +630,7 @@ def export_joint_sample_map(ext='.pdf'):
 
 def export_K_map(ext='.pdf'):
     head_fname = 'spesific-motor-gear-joint-impact-map'
-    format_str = 'm{m:.0f}_l{leg:.2g}_Dj{Dj:g}_Fj{Fj:g}_Tjump{Tjump}_alpha{alpha}'
+    format_str = 'm{m:.0f}_l{leg:.2g}_Dj{Dj:g}_Fj{Fj:g}_Tjump{Tjump}'
     joint_samples = (
         # JointSample(motor_name='EC-4pole 30 100W 36V 175g', Jm=8.91*1e-7, motor_max_tq=0.0564, gear_ratio=229),
         # JointSample(motor_name='EC-4pole 30 100W 36V 210g', Jm=18.3*1e-7, motor_max_tq=0.0780, gear_ratio=229),
@@ -653,12 +653,12 @@ def export_K_map(ext='.pdf'):
     param.Dl = 0.0
     param_str = str.replace(format_str.format(**param.param_dict()), '.','-')
     logger.critical(param_str)
-    esi.plot_motor_map( value_range, fname=head_fname+param_str+ext)
+    esi.plot_motor_map( value_range, fname=head_fname+'_'+param_str+ext)
 
     param.Dl = Dl; param.F = F
     # param_str = str.replace(format_str.format(**param.param_dict()), '.','-')
     # logger.critical(param_str)
-    # esi.plot_motor_map( value_range, fname=head_fname+param_str+ext)
+    # esi.plot_motor_map( value_range, fname=head_fname+'_'+param_str+ext)
 
 if __name__ == '__main__':
     # ext = '.svg'
