@@ -634,7 +634,7 @@ def export_K_map(ext='.pdf'):
     joint_samples = (
         # JointSample(motor_name='EC-4pole 30 100W 36V 175g', Jm=8.91*1e-7, motor_max_tq=0.0564, gear_ratio=229),
         # JointSample(motor_name='EC-4pole 30 100W 36V 210g', Jm=18.3*1e-7, motor_max_tq=0.0780, gear_ratio=229),
-        JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104, gear_ratio=229),
+        JointSample(motor_name='EC-4pole 30 200W 36V 300g', Jm=33.3*1e-7, motor_max_tq=0.104, gear_ratio=140.0/11.0 * 180.0/8.0 * 0.83),
         # JointSample(motor_name='EC-4pole 30 200W 36V double motor 600 g', Jm=2*33.3*1e-7, motor_max_tq=2*0.104, gear_ratio=229),
     )
 
@@ -648,6 +648,8 @@ def export_K_map(ext='.pdf'):
     esi = ExhaustiveSearchInterface()
     esi.joint_samples = joint_samples
     param = esi.jia.param
+    param.m = 4.2 # only misumi frame
+    param.Tjump = 0.5 # 2*(2*hight/g)^0.5 (heigt is the arm length of the test bed)
     param.Dl = 0.0
     param_str = str.replace(format_str.format(**param.param_dict()), '.','-')
     logger.critical(param_str)
